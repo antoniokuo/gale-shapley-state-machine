@@ -1,11 +1,18 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+// The Gale-Shapley Visualiser Root
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <main>
+    <h1>Gale-Shapley State Machine</h1>
+    <p>Architecture Online.</p>
+  </main>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* Scoped styles for the root component will go here */
+main {
+  font-family: sans-serif;
+  padding: 2rem;
+}
+</style>
