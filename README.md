@@ -1,6 +1,6 @@
-# gale-shapley-visualiser
+# Gale-Shapley State Machine
 
-This template should help get you started developing with Vue 3 in Vite.
+Deterministic DAG-reactive state machine for bipartite market matching (Hospital-Residents). Engineered with Vue 3, Pinia, and TypeScript to enforce O(1) lookup times and <200ms HCI latency during cascading algorithmic rejections.
 
 ## Recommended IDE Setup
 
