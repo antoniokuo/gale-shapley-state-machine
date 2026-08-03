@@ -1,44 +1,73 @@
 <script setup lang="ts">
 import { useSessionStore } from './stores/sessionStore'
-
-// We will create and import these components in the next step
-// import PISView from './components/PISView.vue';
-// import ConsentGateway from './components/ConsentGateway.vue';
-// import DebriefView from './components/DebriefView.vue';
+import PISView from './components/PISView.vue'
+import ConsentGateway from './components/ConsentGateway.vue'
 
 const session = useSessionStore()
 </script>
 
 <template>
-  <main class="app-container">
-    <div v-if="session.currentPhase === 'PIS'">
-      <h1>Participant Information Sheet (Placeholder)</h1>
-      <button @click="session.advanceTo('CONSENT')">Read and Continue</button>
+  <main class="min-h-screen bg-neutral-50 p-6 flex flex-col items-center justify-center">
+    <PISView v-if="session.currentPhase === 'PIS'" @continue="session.advanceTo('CONSENT')" />
+
+    <ConsentGateway
+      v-else-if="session.currentPhase === 'CONSENT'"
+      @consented="session.initializeSession()"
+    />
+
+    <div
+      v-else-if="session.currentPhase === 'TASK_1'"
+      class="max-w-xl w-full border-4 border-neutral-900 bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] font-mono"
+    >
+      <h2
+        class="text-xl font-black mb-4 uppercase text-neutral-900 border-b-2 border-neutral-900 pb-2"
+      >
+        Session Initialised
+      </h2>
+      <div class="space-y-2 text-sm text-neutral-700">
+        <p>
+          <span class="font-bold text-neutral-900">Participant UUID:</span>
+          <span class="bg-neutral-100 border border-neutral-300 px-1 font-mono text-xs">{{
+            session.uuid
+          }}</span>
+        </p>
+        <p>
+          <span class="font-bold text-neutral-900">Sequence Allocation:</span> Group
+          {{ session.sequenceGroup }}
+        </p>
+        <p>
+          <span class="font-bold text-neutral-900">Period 1 Protocol:</span> Executing
+          {{ session.task1Type }} Interface
+        </p>
+        <p>
+          <span class="font-bold text-neutral-900">Period 2 Protocol:</span> Executing
+          {{ session.task2Type }} Interface
+        </p>
+      </div>
+      <div class="mt-6 border-t-2 border-neutral-200 pt-4 flex justify-between">
+        <button
+          @click="session.abortSession()"
+          class="text-xs font-bold text-red-600 hover:underline"
+        >
+          Withdraw from Session
+        </button>
+        <button
+          @click="session.advanceTo('DEBRIEF')"
+          class="bg-neutral-900 text-white font-bold text-xs py-2 px-4 border border-neutral-900 hover:bg-neutral-800"
+        >
+          Simulate Task End
+        </button>
+      </div>
     </div>
 
-    <div v-else-if="session.currentPhase === 'CONSENT'">
-      <h1>Digital Consent Gateway (Placeholder)</h1>
-      <button @click="session.initializeSession()">I Consent - Begin Session</button>
-    </div>
-
-    <div v-else-if="session.currentPhase === 'TASK_1'">
-      <h1>Executing Task 1 ({{ session.task1Type }})</h1>
-      <p>UUID: {{ session.uuid }}</p>
-      <p>Group: {{ session.sequenceGroup }}</p>
-      <button @click="session.advanceTo('DEBRIEF')">Simulate Task Completion</button>
-    </div>
-
-    <div v-else-if="session.currentPhase === 'DEBRIEF'">
-      <h1>Debriefing Statement (Placeholder)</h1>
+    <div
+      v-else-if="session.currentPhase === 'DEBRIEF'"
+      class="max-w-xl w-full border-4 border-neutral-900 bg-white p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+    >
+      <h1 class="text-2xl font-black font-mono mb-2">Session Concluded</h1>
+      <p class="text-neutral-700 text-sm">
+        Thank you for your participation. Data transmission complete.
+      </p>
     </div>
   </main>
 </template>
-
-<style scoped>
-.app-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-family: sans-serif;
-}
-</style>
