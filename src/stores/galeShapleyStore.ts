@@ -86,33 +86,28 @@ export const useGaleShapleyStore = defineStore('galeShapley', {
     applyEventToState(event: GSOutcome) {
       switch (event.type) {
         case 'PROPOSING':
-          this.proposers[event.proposer].status = 'PROPOSING'
-          this.proposers[event.proposer].activeTarget = event.receiver
-          break
+          this.proposers[event.proposer]!.status = 'PROPOSING';
+          this.proposers[event.proposer]!.activeTarget = event.receiver;
+          break;
         case 'ACCEPTED':
-          this.proposers[event.accepted].status = 'HELD'
-          this.receiverHolds[event.receiver].push(event.accepted)
-          break
+          this.proposers[event.accepted]!.status = 'HELD';
+          this.receiverHolds[event.receiver]!.push(event.accepted);
+          break;
         case 'REJECTED':
-          this.proposers[event.rejected].status = 'REJECTED'
-          this.proposers[event.rejected].activeTarget = null
-          break
+          this.proposers[event.rejected]!.status = 'REJECTED';
+          this.proposers[event.rejected]!.activeTarget = null;
+          break;
         case 'DISPLACEMENT':
-          // Accept the new proposer
-          this.proposers[event.accepted].status = 'HELD'
-          this.proposers[event.accepted].activeTarget = event.receiver
-          this.receiverHolds[event.receiver].push(event.accepted)
+          this.proposers[event.accepted]!.status = 'HELD';
+          this.proposers[event.accepted]!.activeTarget = event.receiver;
+          this.receiverHolds[event.receiver]!.push(event.accepted);
 
-          // Reject the displaced proposer (triggers "bounce back" FLIP animation)
-          this.proposers[event.rejected].status = 'REJECTED'
-          this.proposers[event.rejected].activeTarget = null
+          this.proposers[event.rejected]!.status = 'REJECTED';
+          this.proposers[event.rejected]!.activeTarget = null;
 
-          // Remove displaced from receiver's holds
-          this.receiverHolds[event.receiver] = this.receiverHolds[event.receiver].filter(
-            (id) => id !== event.rejected,
-          )
-          break
+          this.receiverHolds[event.receiver] = this.receiverHolds[event.receiver]!.filter(
+            id => id !== event.rejected
+          );
+          break;
       }
-    },
-  },
-})
+    }
