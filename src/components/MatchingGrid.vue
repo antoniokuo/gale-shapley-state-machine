@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useGaleShapleyStore } from '../stores/sessionStore' // We will map this from the actual store path
 import { useGaleShapleyStore as useEngineStore } from '../stores/galeShapleyStore'
 
 const store = useEngineStore()
