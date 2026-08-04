@@ -12,19 +12,13 @@ const declarations = ref({
 })
 
 const isFullyChecked = computed(() => {
-  return (
-    declarations.value.readPIS &&
-    declarations.value.voluntary &&
-    declarations.value.anonymous &&
-    declarations.value.eligibility &&
-    declarations.value.agree
-  )
+  return Object.values(declarations.value).every((val) => val === true)
 })
 </script>
 
 <template>
   <div
-    class="max-w-2xl mx-auto my-12 border-4 border-neutral-900 bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+    class="max-w-3xl mx-auto my-12 border-4 border-neutral-900 bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
   >
     <div class="border-b-4 border-neutral-900 pb-4 mb-6">
       <span
@@ -37,11 +31,12 @@ const isFullyChecked = computed(() => {
     </div>
 
     <p
-      class="text-sm font-mono text-neutral-600 bg-neutral-50 p-3 border-2 border-neutral-300 border-dashed mb-6"
+      class="text-sm font-mono text-neutral-600 bg-neutral-50 p-4 border-2 border-neutral-300 border-dashed mb-6 leading-relaxed"
     >
       To ensure absolute anonymity and compliance with data minimisation under UK GDPR, consent is
-      obtained via this unlinked digital checkbox gateway. No physical signatures or Personally
-      Identifiable Information are collected.
+      obtained via an unlinked digital checkbox gateway. No physical signatures or Personally
+      Identifiable Information are collected. The participant must check all boxes below before the
+      system will generate an anonymous UUID and initialise the study environment.
     </p>
 
     <div class="space-y-4">
@@ -51,11 +46,11 @@ const isFullyChecked = computed(() => {
         <input
           type="checkbox"
           v-model="declarations.readPIS"
-          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0"
+          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0 shrink-0"
         />
         <span class="text-sm font-medium text-neutral-800 group-hover:text-neutral-900"
-          >I confirm that I have read and understood the Participant Information Sheet (PIS) for the
-          above study.</span
+          >I confirm that I have read and understood the Participant Information Sheet (PIS) for
+          this study.</span
         >
       </label>
 
@@ -65,7 +60,7 @@ const isFullyChecked = computed(() => {
         <input
           type="checkbox"
           v-model="declarations.voluntary"
-          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0"
+          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0 shrink-0"
         />
         <span class="text-sm font-medium text-neutral-800 group-hover:text-neutral-900"
           >I understand that my participation is entirely voluntary and that I am free to withdraw
@@ -80,7 +75,7 @@ const isFullyChecked = computed(() => {
         <input
           type="checkbox"
           v-model="declarations.anonymous"
-          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0"
+          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0 shrink-0"
         />
         <span class="text-sm font-medium text-neutral-800 group-hover:text-neutral-900"
           >I understand that this study collects strictly anonymous data. Because no name or
@@ -95,7 +90,7 @@ const isFullyChecked = computed(() => {
         <input
           type="checkbox"
           v-model="declarations.eligibility"
-          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0"
+          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0 shrink-0"
         />
         <span class="text-sm font-medium text-neutral-800 group-hover:text-neutral-900"
           >I confirm I am a University of Bath student enrolled in a quantitative STEM or
@@ -110,10 +105,10 @@ const isFullyChecked = computed(() => {
         <input
           type="checkbox"
           v-model="declarations.agree"
-          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0"
+          class="mt-1 mr-4 h-5 w-5 accent-neutral-900 border-2 border-neutral-900 rounded-none focus:ring-0 shrink-0"
         />
         <span class="text-sm font-bold text-neutral-900"
-          >I agree to take part in the above research project.</span
+          >I agree to take part in this research project.</span
         >
       </label>
     </div>
