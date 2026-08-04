@@ -13,6 +13,12 @@ import PredictionModal from './components/PredictionModal.vue'
 import taskA from './data/taskA.json'
 import taskB from './data/taskB.json'
 
+interface MarketDataset {
+  proposerPreferences: Record<string, string[]>
+  receiverPreferences: Record<string, string[]>
+  receiverInvertedRanks: Record<string, Record<string, number>>
+}
+
 const session = useSessionStore()
 const engine = useGaleShapleyStore()
 
@@ -27,15 +33,16 @@ watch(
   },
 )
 
-const executeMarket = async (dataset: any) => {
+const executeMarket = async (rawDataset: unknown) => {
+  const dataset = rawDataset as MarketDataset
   const proposerIds = Object.keys(dataset.proposerPreferences)
   const receiverIds = Object.keys(dataset.receiverPreferences)
 
-  // Dynamic Breakpoint Injection: Intercept the first 5 proposers' initial market moves for telemetry
+  // Dynamic Breakpoint Injection
   const breakpoints = new Set<string>()
   for (let i = 0; i < 5; i++) {
-    const p = proposerIds[i]
-    const r = dataset.proposerPreferences[p][0]
+    const p = proposerIds[i]!
+    const r = dataset.proposerPreferences[p]![0]!
     breakpoints.add(`${p}-${r}`)
   }
 

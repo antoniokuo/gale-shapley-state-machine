@@ -12,14 +12,12 @@ const selectedAction = ref('')
 const selectedTarget = ref('')
 const renderTimestamp = ref(0)
 
-// Capture the precise timestamp when the modal hits the DOM
 onMounted(() => {
   renderTimestamp.value = performance.now()
 })
 
 const executeSubmission = () => {
   const clickTimestamp = performance.now()
-  // Isolate human cognitive processing latency (T_cognitive)
   const latencyMs = Math.max(1, Math.round(clickTimestamp - renderTimestamp.value))
 
   emit('submit', {
@@ -32,61 +30,70 @@ const executeSubmission = () => {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/80 backdrop-blur-sm"
+    class="fixed bottom-6 right-6 z-50 max-w-sm w-full border-4 border-neutral-900 bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] font-mono animate-bounce-short"
   >
-    <div
-      class="bg-white border-4 border-neutral-900 p-8 max-w-lg w-full shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] font-mono"
-    >
-      <div class="border-b-4 border-neutral-900 pb-4 mb-6 flex justify-between items-end">
-        <div>
-          <span
-            class="text-xs font-bold uppercase tracking-widest text-red-600 bg-red-100 px-2 py-1 border border-red-300"
-            >Execution Halted</span
-          >
-          <h2 class="text-2xl font-black mt-2 text-neutral-900">Predict Next State</h2>
-        </div>
-      </div>
-
-      <p class="text-sm text-neutral-700 mb-6">
-        Based on the current DAG topology, predict the immediate next algorithmic resolution.
-      </p>
-
-      <div class="space-y-4 mb-8">
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-widest text-neutral-500 mb-2"
-            >Predicted Action</label
-          >
-          <select
-            v-model="selectedAction"
-            class="w-full border-2 border-neutral-900 bg-neutral-50 p-3 text-sm font-bold focus:ring-0 focus:border-blue-500 outline-none"
-          >
-            <option disabled value="">Select operation...</option>
-            <option value="ACCEPT">Target Accepts Proposer</option>
-            <option value="REJECT">Target Rejects Proposer</option>
-            <option value="DISPLACE">Target Displaces Existing Hold</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-widest text-neutral-500 mb-2"
-            >Affected Target (Receiver/Proposer)</label
-          >
-          <input
-            v-model="selectedTarget"
-            type="text"
-            placeholder="e.g. R1 or P12"
-            class="w-full border-2 border-neutral-900 bg-neutral-50 p-3 text-sm font-bold focus:ring-0 focus:border-blue-500 outline-none uppercase placeholder:normal-case"
-          />
-        </div>
-      </div>
-
-      <button
-        :disabled="!selectedAction || !selectedTarget"
-        @click="executeSubmission"
-        class="w-full font-mono font-bold uppercase py-4 px-6 border-2 border-neutral-900 transition-all focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed bg-blue-500 hover:bg-blue-400 text-white active:translate-x-1 active:translate-y-1 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+    <div class="border-b-2 border-neutral-900 pb-2 mb-4">
+      <span
+        class="text-[10px] font-bold uppercase tracking-widest text-red-600 bg-red-100 px-1.5 py-0.5 border border-red-300"
+        >Machine Halted</span
       >
-        Submit Prediction & Resume
-      </button>
+      <h2 class="text-lg font-black mt-1 text-neutral-900">Predict Next State</h2>
     </div>
+
+    <p class="text-xs text-neutral-600 mb-4 leading-relaxed">
+      Observe the matching grid in the background and input the next operational move.
+    </p>
+
+    <div class="space-y-3 mb-4">
+      <div>
+        <label class="block text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-1"
+          >Predicted Action</label
+        >
+        <select
+          v-model="selectedAction"
+          class="w-full border-2 border-neutral-900 bg-neutral-50 p-2 text-xs font-bold focus:ring-0 focus:border-blue-500 outline-none"
+        >
+          <option disabled value="">Select operation...</option>
+          <option value="ACCEPT">Target Accepts Proposer</option>
+          <option value="REJECT">Target Rejects Proposer</option>
+          <option value="DISPLACE">Target Displaces Existing Hold</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold uppercase tracking-widest text-neutral-500 mb-1"
+          >Affected Target (Receiver/Proposer)</label
+        >
+        <input
+          v-model="selectedTarget"
+          type="text"
+          placeholder="e.g. R1 or P1"
+          class="w-full border-2 border-neutral-900 bg-neutral-50 p-2 text-xs font-bold focus:ring-0 focus:border-blue-500 outline-none uppercase"
+        />
+      </div>
+    </div>
+
+    <button
+      :disabled="!selectedAction || !selectedTarget"
+      @click="executeSubmission"
+      class="w-full font-mono font-bold uppercase py-2 px-4 text-xs border-2 border-neutral-900 transition-all focus:outline-none disabled:opacity-30 disabled:cursor-not-allowed bg-blue-500 hover:bg-blue-400 text-white active:translate-x-0.5 active:translate-y-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:shadow-none"
+    >
+      Submit & Resume
+    </button>
   </div>
 </template>
+
+<style scoped>
+@keyframes bounceShort {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.animate-bounce-short {
+  animation: bounceShort 2s infinite ease-in-out;
+}
+</style>
