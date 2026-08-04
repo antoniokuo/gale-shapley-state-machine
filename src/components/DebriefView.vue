@@ -29,7 +29,7 @@
           The objective of this research is to empirically evaluate whether a DAG-reactive state
           machine paired with an interactive user interface significantly reduces cognitive load and
           improves usability compared to traditional static diagrams when learning complex
-          O(N&sup2;) algorithms.
+          O(N&sup2;) bipartite matching algorithms.
         </p>
       </section>
 
