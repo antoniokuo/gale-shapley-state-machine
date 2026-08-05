@@ -6,27 +6,41 @@ defineEmits<{ (e: 'continue'): void }>()
   <div
     class="max-w-4xl mx-auto my-8 border-4 border-neutral-900 bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
   >
-    <div class="border-b-4 border-neutral-900 pb-4 mb-6">
+    <div class="border-b-4 border-neutral-900 pb-4 mb-6 font-mono">
       <span
-        class="text-xs font-mono font-bold uppercase tracking-widest text-neutral-500 bg-neutral-100 px-2 py-1 border border-neutral-300"
+        class="text-xs font-bold uppercase tracking-widest text-black bg-neutral-100 px-2 py-1 border-2 border-neutral-900"
         >University of Bath</span
       >
-      <h1 class="text-3xl font-black font-mono tracking-tight mt-3 text-neutral-900">
+      <h1 class="text-3xl font-black text-black tracking-tight mt-3">
         Participant Information Sheet (PIS)
       </h1>
-      <p class="mt-2 text-sm font-mono text-neutral-600">
-        <span class="font-bold">Study Title:</span> Architecting a DAG-Reactive State Machine for
-        Asymmetric Bipartite Matching and Interactive Visualisation<br />
-        <span class="font-bold">Researcher:</span> Antonio Kuo (MSc Computer Science)<br />
-        <span class="font-bold">Supervisor:</span> Pedro Henrique Azevedo De Amorim (Department of
-        Computer Science)
-      </p>
+      <div
+        class="mt-3 text-sm text-black font-bold leading-relaxed bg-neutral-50 p-4 border-2 border-neutral-900 space-y-1"
+      >
+        <div>
+          <span class="uppercase tracking-wider text-xs text-neutral-600 block">Study Title</span>
+          Architecting a DAG-Reactive State Machine for Asymmetric Bipartite Matching and
+          Interactive Visualisation
+        </div>
+        <div class="pt-2">
+          <span class="uppercase tracking-wider text-xs text-neutral-600 block"
+            >Lead Researcher</span
+          >
+          Antonio Kuo (MSc Computer Science, University of Bath)
+        </div>
+        <div class="pt-2">
+          <span class="uppercase tracking-wider text-xs text-neutral-600 block"
+            >Academic Supervisor</span
+          >
+          Pedro Henrique Azevedo De Amorim (Department of Computer Science, University of Bath)
+        </div>
+      </div>
     </div>
 
-    <div class="space-y-6 text-neutral-800 leading-relaxed font-sans text-sm">
+    <div class="space-y-6 text-base text-black font-normal leading-relaxed font-sans">
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           1. Invitation to Participate
         </h2>
@@ -40,7 +54,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           2. What is the purpose of the study?
         </h2>
@@ -53,7 +67,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           3. Why have I been chosen?
         </h2>
@@ -66,7 +80,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           4. Do I have to take part?
         </h2>
@@ -80,7 +94,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           5. What will happen if I take part?
         </h2>
@@ -89,7 +103,7 @@ defineEmits<{ (e: 'continue'): void }>()
           University of Bath building (either the Main Campus or the Virgil Building, whichever is
           most convenient). During the session, you will:
         </p>
-        <ul class="list-disc pl-5 mt-2 space-y-1">
+        <ul class="list-disc pl-6 mt-2 space-y-2 font-medium">
           <li>Interact with a custom web application demonstrating algorithmic matching.</li>
           <li>Predict system state changes at five breakpoints per task.</li>
           <li>
@@ -105,7 +119,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           6. Will my data be kept confidential?
         </h2>
@@ -119,7 +133,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           7. What is the withdrawal policy?
         </h2>
@@ -128,16 +142,18 @@ defineEmits<{ (e: 'continue'): void }>()
           informing the researcher or closing the browser window; any partial data will be
           immediately destroyed.
         </p>
-        <p class="mt-2 font-bold bg-neutral-100 p-2 border-l-4 border-neutral-900">
+        <div
+          class="mt-3 font-mono font-bold text-black bg-amber-50 p-4 border-2 border-neutral-950 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+        >
           Important: Because the data is strictly anonymous, once you complete the session and the
           data is submitted to the secure server, it will be impossible to withdraw your data, as
           the researcher cannot link your identity to a specific UUID.
-        </p>
+        </div>
       </section>
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           8. Are there any risks?
         </h2>
@@ -149,7 +165,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           9. How do I consent?
         </h2>
@@ -162,7 +178,7 @@ defineEmits<{ (e: 'continue'): void }>()
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-1 mb-2"
         >
           10. Contact for Further Information
         </h2>
@@ -173,10 +189,10 @@ defineEmits<{ (e: 'continue'): void }>()
       </section>
     </div>
 
-    <div class="mt-8 pt-6 border-t-4 border-neutral-900 flex justify-end">
+    <div class="mt-8 pt-6 border-t-4 border-neutral-900 flex justify-end font-mono">
       <button
         @click="$emit('continue')"
-        class="bg-neutral-900 hover:bg-neutral-800 text-white font-mono font-bold uppercase py-3 px-6 border-2 border-neutral-900 transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-900 active:translate-x-1 active:translate-y-1 active:shadow-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+        class="bg-neutral-900 hover:bg-neutral-800 text-white font-bold uppercase py-3 px-6 border-2 border-neutral-900 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-none"
       >
         Read and Continue &rarr;
       </button>

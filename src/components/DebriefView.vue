@@ -1,27 +1,33 @@
-<script setup lang="ts">
-// Final view, no emits required.
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <div
-    class="max-w-3xl mx-auto my-12 border-4 border-neutral-900 bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+    class="max-w-4xl mx-auto my-12 border-4 border-neutral-900 bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
   >
-    <div class="border-b-4 border-neutral-900 pb-4 mb-6">
-      <h1 class="text-3xl font-black font-mono tracking-tight text-neutral-900">
+    <div class="border-b-4 border-neutral-900 pb-4 mb-6 font-mono">
+      <span
+        class="text-xs font-bold uppercase tracking-widest text-black bg-neutral-100 px-2 py-1 border-2 border-neutral-900"
+        >Ethics@Bath Project ID: 17735</span
+      >
+      <h1 class="text-3xl font-black text-black tracking-tight mt-3">
         Digital Debriefing Statement
       </h1>
     </div>
 
-    <div class="space-y-6 text-neutral-800 leading-relaxed font-sans text-sm">
-      <p class="text-lg font-bold">Thank you for your valuable participation in this study!</p>
-      <p>
-        Your time and input are highly appreciated and directly contribute to this MSc Computer
-        Science dissertation project.
-      </p>
+    <div class="space-y-8 text-base text-black font-normal leading-relaxed font-sans">
+      <div class="border-l-4 border-neutral-900 pl-4 py-1">
+        <p class="text-xl font-black text-black tracking-tight">
+          Thank you for your valuable participation in this study!
+        </p>
+        <p class="mt-2 text-base font-bold">
+          Your time and input are highly appreciated and directly contribute to this MSc Computer
+          Science dissertation project.
+        </p>
+      </div>
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-2 mb-3"
         >
           Project Purpose and Rationale
         </h2>
@@ -35,9 +41,9 @@
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-2 mb-3"
         >
-          Data Management and Anonymity Reminder
+          Data Management &amp; Anonymity Reminder
         </h2>
         <p>
           As stated at the beginning of the session, your data has been transmitted and recorded
@@ -50,31 +56,25 @@
 
       <section>
         <h2
-          class="text-base font-bold font-mono text-neutral-900 uppercase border-b-2 border-neutral-200 pb-1 mb-2"
+          class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-2 mb-3"
         >
-          Future Findings & Contact
+          Future Findings &amp; Contact
         </h2>
         <p>
           The final aggregate, anonymised results of this study will be compiled into a dissertation
-          report submitted in September 2026. If you have any questions regarding the project or
+          report submitted in September 2026. If you have any questions regarding the project, or
           wish to learn about the high-level findings after this date, please feel free to contact
-          the research team via email:
+          the Lead Researcher, <strong>Antonio Kuo</strong> (ak4329@bath.ac.uk), or the Academic
+          Supervisor, <strong>Dr Pedro Henrique Azevedo De Amorim</strong> (phaa20@bath.ac.uk).
         </p>
-        <ul class="list-none mt-2 space-y-1 bg-neutral-100 p-4 border border-neutral-300 font-mono">
-          <li><span class="font-bold">Lead Researcher:</span> Antonio Kuo (ak4329@bath.ac.uk)</li>
-          <li>
-            <span class="font-bold">Academic Supervisor:</span> Pedro Henrique Azevedo De Amorim
-            (phaa20@bath.ac.uk)
-          </li>
-        </ul>
       </section>
     </div>
 
-    <div class="mt-8 pt-6 border-t-4 border-neutral-900 text-center">
+    <div class="mt-10 pt-6 border-t-4 border-neutral-900 text-center font-mono">
       <p
-        class="font-mono font-bold text-neutral-900 uppercase bg-emerald-100 p-4 border-2 border-emerald-500"
+        class="font-bold text-black uppercase bg-emerald-50 p-4 border-2 border-emerald-500 shadow-[4px_4px_0px_0px_rgba(16,185,129,1)]"
       >
-        You may now close this browser window.
+        Session Terminated. You may now close this browser window.
       </p>
     </div>
   </div>
