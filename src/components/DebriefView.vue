@@ -29,7 +29,7 @@
         <h2
           class="text-xl font-black text-black font-mono uppercase border-b-2 border-neutral-950 pb-2 mb-3"
         >
-          Project Purpose and Rationale
+          Project Purpose &amp; Rationale
         </h2>
         <p>
           The objective of this research is to empirically evaluate whether a DAG-reactive state
