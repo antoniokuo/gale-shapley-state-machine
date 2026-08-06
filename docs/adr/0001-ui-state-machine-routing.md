@@ -12,7 +12,7 @@ The application requires a linear progression of screens for the HCI study: Part
 
 ## Decision
 
-We will reject standard URL-based routing (e.g., `vue-router`) in favor of a centralised Pinia state enum combined with Vue conditional rendering (`v-if`).
+We will reject standard URL-based routing (e.g., `vue-router`) in favour of a centralised Pinia state enum combined with Vue conditional rendering (`v-if`).
 
 ## Consequences
 
