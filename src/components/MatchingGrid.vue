@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import { useGaleShapleyStore as useEngineStore } from '../stores/galeShapleyStore'
+import PredictionModal from './PredictionModal.vue'
 
 const store = useEngineStore()
 const isDevMode = ref(false)
+
+// Bubble the prediction event up to App.vue so telemetry logic stays centralized
+defineEmits<{
+  (e: 'submit-prediction', payload: any): void
+}>()
 
 onMounted(() => {
   const params = new URLSearchParams(window.location.search)
@@ -26,15 +32,15 @@ const getProposerStatusClass = (status: string) => {
   }
 }
 
-// Safely access the array we passed from App.vue
-const getProposerPrefs = (proposerId: string) => {
-  // Due to our initialization mapping, proposer preferences are stored here
+// FIX: Safely access the array and guard against null to satisfy strict TypeScript
+const getProposerPrefs = (proposerId: string | null) => {
+  if (!proposerId) return []
   return store.receiverPreferences[proposerId] || []
 }
 
-// Computes the visual strike-through logic for the live tracer
-const getPrefVisualState = (proposerId: string, currentTargetInArray: string) => {
-  if (!store.activeTargetReceiverId) return 'PENDING'
+// FIX: Computes the visual strike-through logic securely
+const getPrefVisualState = (proposerId: string | null, currentTargetInArray: string) => {
+  if (!proposerId || !store.activeTargetReceiverId) return 'PENDING'
 
   const prefs = getProposerPrefs(proposerId)
   const activeTargetIndex = prefs.indexOf(store.activeTargetReceiverId)
@@ -54,15 +60,15 @@ const getPrefVisualState = (proposerId: string, currentTargetInArray: string) =>
     >
       <span
         class="font-black uppercase text-black font-mono block text-sm tracking-widest mb-2 border-b-2 border-neutral-900 pb-1"
-        >&sect; Active Experimental Task Objective</span
       >
-      <span v-if="!isSpotlightActive"
-        >Observe the background execution vectors. The engine is running autonomously.</span
-      >
-      <span v-else class="text-blue-700"
-        >System halted. Evaluate the isolated node states below and submit your prediction to
-        resume.</span
-      >
+        &sect; Active Experimental Task Objective
+      </span>
+      <span v-if="!isSpotlightActive">
+        Observe the background execution vectors. The engine is running autonomously.
+      </span>
+      <span v-else class="text-blue-700">
+        System halted. Evaluate the isolated node states below and submit your prediction to resume.
+      </span>
     </div>
 
     <div
@@ -135,39 +141,42 @@ const getPrefVisualState = (proposerId: string, currentTargetInArray: string) =>
         </div>
       </div>
 
-      <div class="col-span-5 relative">
-        <h3 class="text-xl font-black uppercase border-b-4 border-neutral-900 pb-2 mb-4">
-          Proposers Pool
-        </h3>
+      <div class="col-span-5 relative w-full flex flex-col items-center">
+        <template v-if="isSpotlightActive">
+          <PredictionModal @submit="(payload) => $emit('submit-prediction', payload)" />
+        </template>
 
-        <div class="grid grid-cols-3 gap-3">
-          <div
-            v-for="proposer in store.proposers"
-            :key="proposer.id"
-            :class="[
-              'border-4 p-3 flex flex-col items-center justify-center font-black transition-all duration-500 ease-in-out min-h-[85px]',
-              getProposerStatusClass(proposer.status),
-              isSpotlightActive && store.activeProposerId !== proposer.id
-                ? 'opacity-25 grayscale blur-[1px]'
-                : 'opacity-100',
-            ]"
+        <template v-else>
+          <h3
+            class="text-xl font-black uppercase border-b-4 border-neutral-900 pb-2 mb-4 w-full text-left"
           >
-            <span class="text-xl tracking-tight">{{ proposer.id }}</span>
-
-            <span
-              class="text-[10px] uppercase font-black tracking-tighter mt-1 border-t-2 border-current pt-1 w-full text-center block"
+            Proposers Pool
+          </h3>
+          <div class="grid grid-cols-3 gap-3 w-full">
+            <div
+              v-for="proposer in store.proposers"
+              :key="proposer.id"
+              :class="[
+                'border-4 p-3 flex flex-col items-center justify-center font-black transition-all duration-500 ease-in-out min-h-[85px]',
+                getProposerStatusClass(proposer.status),
+              ]"
             >
-              <template v-if="proposer.status === 'PROPOSING'"
-                >Proposing &rarr; {{ proposer.activeTarget }}</template
+              <span class="text-xl tracking-tight">{{ proposer.id }}</span>
+              <span
+                class="text-[10px] uppercase font-black tracking-tighter mt-1 border-t-2 border-current pt-1 w-full text-center block"
               >
-              <template v-else-if="proposer.status === 'HELD'"
-                >Held by {{ proposer.activeTarget }}</template
-              >
-              <template v-else-if="proposer.status === 'REJECTED'">Rejected</template>
-              <template v-else>Idle Pool</template>
-            </span>
+                <template v-if="proposer.status === 'PROPOSING'"
+                  >Proposing &rarr; {{ proposer.activeTarget }}</template
+                >
+                <template v-else-if="proposer.status === 'HELD'"
+                  >Held by {{ proposer.activeTarget }}</template
+                >
+                <template v-else-if="proposer.status === 'REJECTED'">Rejected</template>
+                <template v-else>Idle Pool</template>
+              </span>
+            </div>
           </div>
-        </div>
+        </template>
       </div>
 
       <div class="col-span-3">
@@ -206,7 +215,7 @@ const getPrefVisualState = (proposerId: string, currentTargetInArray: string) =>
 
               <div class="flex flex-col space-y-2 font-mono text-sm font-bold text-black">
                 <div
-                  v-for="(receiverObj, idx) in getProposerPrefs(store.activeProposerId)"
+                  v-for="(receiverObj, idx) in getProposerPrefs(store.activeProposerId!)"
                   :key="idx"
                   class="flex items-center justify-between px-2 py-1.5 transition-all duration-300"
                   :class="[

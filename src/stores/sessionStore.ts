@@ -3,7 +3,15 @@ import { defineStore } from 'pinia'
 
 // Strict literal types to prevent invalid routing states
 export type SessionPhase =
-  'PIS' | 'CONSENT' | 'TASK_1' | 'SURVEY_1' | 'TASK_2' | 'SURVEY_2' | 'SANDBOX' | 'DEBRIEF'
+  | 'PIS'
+  | 'CONSENT'
+  | 'TRAINING'
+  | 'TASK_1'
+  | 'SURVEY_1'
+  | 'TASK_2'
+  | 'SURVEY_2'
+  | 'SANDBOX'
+  | 'DEBRIEF'
 
 export type SequenceGroup = 'AB' | 'BA'
 

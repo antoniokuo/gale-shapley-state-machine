@@ -68,7 +68,7 @@ const handleKeyboardSubmit = (event: KeyboardEvent) => {
 
 <template>
   <div
-    class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 max-w-xl w-full border-4 border-neutral-950 bg-white p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] font-mono animate-bounce-short"
+    class="w-full max-w-xl border-4 border-neutral-950 bg-white p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] font-mono animate-bounce-short"
   >
     <div class="border-b-4 border-neutral-950 pb-3 mb-6">
       <span
@@ -197,18 +197,20 @@ const handleKeyboardSubmit = (event: KeyboardEvent) => {
 </template>
 
 <style scoped>
+/* FIX: Animation converted back to standard vertical translation */
 @keyframes bounceShort {
   0%,
   100% {
-    transform: translate(-50%, -50%);
+    transform: translateY(0);
   }
   50% {
-    transform: translate(-50%, calc(-50% - 4px));
+    transform: translateY(-4px);
   }
 }
 .animate-bounce-short {
   animation: bounceShort 2.5s infinite ease-in-out;
 }
+
 @keyframes fadeIn {
   from {
     opacity: 0;

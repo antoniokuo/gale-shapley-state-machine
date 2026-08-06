@@ -7,7 +7,7 @@ import PISView from './components/PISView.vue'
 import ConsentGateway from './components/ConsentGateway.vue'
 import DebriefView from './components/DebriefView.vue'
 import MatchingGrid from './components/MatchingGrid.vue'
-import PredictionModal from './components/PredictionModal.vue'
+// Removed PredictionModal import: It is now structurally embedded inside MatchingGrid
 
 import taskA from './data/taskA.json'
 import taskB from './data/taskB.json'
@@ -81,8 +81,9 @@ const handleTelemetryPayload = (payload: {
       <div class="border-b-4 border-neutral-900 pb-3 mb-6">
         <span
           class="text-xs font-bold uppercase tracking-widest text-black bg-neutral-100 px-2 py-1 border-2 border-neutral-900"
-          >Pre-Task Orientation Protocol</span
         >
+          Pre-Task Orientation Protocol
+        </span>
         <h2 class="text-3xl font-black text-black tracking-tight mt-2 uppercase">
           Gale-Shapley: Logic & Legend
         </h2>
@@ -215,8 +216,7 @@ const handleTelemetryPayload = (payload: {
         </button>
       </div>
 
-      <MatchingGrid />
-      <PredictionModal v-if="engine.isAwaitingUserInput" @submit="handleTelemetryPayload" />
+      <MatchingGrid @submit-prediction="handleTelemetryPayload" />
     </div>
 
     <DebriefView v-else-if="session.currentPhase === 'DEBRIEF'" />
