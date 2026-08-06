@@ -10,23 +10,47 @@ export interface ProposerState {
 
 export const useGaleShapleyStore = defineStore('galeShapley', {
   state: () => ({
+    // Core Engine State
     iterator: null as AsyncGenerator<GSOutcome, void, unknown> | null,
     tickRate: 800,
     isAwaitingUserInput: false,
 
+    // Data Collections
     proposers: {} as Record<string, ProposerState>,
     receiverHolds: {} as Record<string, string[]>,
-
     receiverInvertedRanks: {} as Record<string, Record<string, number>>,
+    receiverPreferences: {} as Record<string, string[]>,
+
+    // THE SPOTLIGHT ANCHORS (New)
+    activeProposerId: null as string | null,
+    activeTargetReceiverId: null as string | null,
   }),
 
   actions: {
+    // --------------------------------------------------
+    // SPOTLIGHT CONTROLLERS
+    // --------------------------------------------------
+    setBreakpointFocus(proposerId: string | null, receiverId: string | null) {
+      this.activeProposerId = proposerId
+      this.activeTargetReceiverId = receiverId
+    },
+
+    clearBreakpointFocus() {
+      this.activeProposerId = null
+      this.activeTargetReceiverId = null
+    },
+
+    // --------------------------------------------------
+    // EXECUTION PIPELINE
+    // --------------------------------------------------
     initializeMarket(
       proposerIds: string[],
       receiverIds: string[],
       invertedRanks: Record<string, Record<string, number>>,
+      receiverPrefs: Record<string, string[]> = {},
     ) {
       this.receiverInvertedRanks = invertedRanks
+      this.receiverPreferences = receiverPrefs
 
       proposerIds.forEach((id) => {
         this.proposers[id] = { id, status: 'FREE', activeTarget: null }
@@ -61,6 +85,12 @@ export const useGaleShapleyStore = defineStore('galeShapley', {
 
       if (value.type === 'BREAKPOINT') {
         this.isAwaitingUserInput = true
+
+        // Extracting target variables directly from the generator yield.
+        // Assumes your generator passes proposer and receiver identifiers in the BREAKPOINT event.
+        if (value.proposer && value.receiver) {
+          this.setBreakpointFocus(value.proposer, value.receiver)
+        }
         return
       }
 
@@ -72,6 +102,7 @@ export const useGaleShapleyStore = defineStore('galeShapley', {
 
     resumeFromBreakpoint(userPredictionPayload: any) {
       this.isAwaitingUserInput = false
+      this.clearBreakpointFocus() // Instantly release the UI mask
       console.log('Telemetry payload recorded:', userPredictionPayload)
       this.processNextTick()
     },

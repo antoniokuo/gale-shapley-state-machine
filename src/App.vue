@@ -43,7 +43,13 @@ const executeMarket = async (rawDataset: unknown) => {
     breakpoints.add(`${p}-${r}`)
   }
 
-  engine.initializeMarket(proposerIds, receiverIds, dataset.receiverInvertedRanks)
+  // Pass dataset.proposerPreferences here to hydrate the Live Tracer matrix
+  engine.initializeMarket(
+    proposerIds,
+    receiverIds,
+    dataset.receiverInvertedRanks,
+    dataset.proposerPreferences,
+  )
   await engine.startExecution(proposerIds, dataset.proposerPreferences, 3, breakpoints)
 }
 
