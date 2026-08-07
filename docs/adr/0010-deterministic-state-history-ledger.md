@@ -14,7 +14,7 @@ The SOP (Section 1.4) mandates that participants must have access to bidirection
 
 The application will implement a **Deterministic State History Ledger** within the Pinia store.
 
-1. **Pre-computation & Caching:** Upon session initialization, the generator fully executes the algorithm in the background. The Pinia store intercepts every yielded event and pushes a deep-cloned, immutable snapshot of the market state into a flat array (`stateLedger`).
+1. **Pre-computation & Caching:** Upon session initialisation, the generator fully executes the algorithm in the background. The Pinia store intercepts every yielded event and pushes a deep-cloned, immutable snapshot of the market state into a flat array (`stateLedger`).
 2. **Pointer-Based Rendering:** The UI components are completely decoupled from the generator. They render strictly based on a reactive `tickIndex` pointer that queries the `stateLedger` array in $O(1)$ time.
 3. **Time-Travel Mechanics:** Moving forward or backward in time is executed purely by incrementing or decrementing the `tickIndex` integer, swapping out the global UI state instantly.
 
