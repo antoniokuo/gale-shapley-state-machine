@@ -21,18 +21,18 @@ We isolated the core algorithm into an Asynchronous Generator Function (`async f
 - **Positive:** Simplifies unit testing by allowing headless, step-by-step evaluation of the iterator without mounting Vue components.
 - **Negative:** Requires explicit lifecycle management inside the Pinia store to handle iterator instantiation and teardown.
 
-## Amendments (2026-08-06)
+## Amendments (2026-08-07)
 
 ### Context Update
 
-Empirical testing revealed that a 5-breakpoint threshold was insufficient to gather a statistically significant sample size for psychometric latency analysis. It also restricted telemetry capture to the uncongested initialisation phase of the market, omitting cascading displacement data.
+Further system testing revealed that arbitrary breakpoint assignment (e.g., pausing exactly every $N$ steps) fails to guarantee interception during complex graph states. Increasing the volume of breakpoints to brute-force the capture of displacement events violates the approved 5-breakpoint Ethics SOP and introduces non-IID human fatigue variables.
 
 ### Amended Decision
 
-The execution engine is updated to enforce **10 predefined HCI breakpoints** per experimental task phase. The underlying generator function remains unchanged, but the breakpoint generation array is scaled to intercept 10 execution loops across the lifecycle of the bipartite market.
+The breakpoint interception array is strictly locked to **5 deterministic algorithmic milestones** rather than arbitrary loop counts. The generator engine will yield `BREAKPOINT` events explicitly at: (1) Initial uncontested proposal, (2) Target capacity reached, (3) First active displacement, (4) Deep cascading rejection, and (5) Final equilibrium convergence.
 
 ### Amended Consequences
 
-- **Positive:** Doubles the sample size resolution per participant, ensuring robust data points for variance and standard deviation processing.
-- **Positive:** Intercepts execution during peak algorithmic congestion, capturing highly accurate cognitive load deltas between basic and advanced matching states.
-- **Negative:** Extends the active phase duration slightly, though total interaction time remains well within the target experimental threshold.
+- **Positive:** Ensures 100% compliance with institutional Ethics protocols regarding maximum task interruption thresholds.
+- **Positive:** Mathematically guarantees telemetry is logged during peak algorithmic congestion, securing the high-variance cognitive load data required to validate the independent variable.
+- **Negative:** Requires bespoke mapping logic within the simulation seed datasets to align spatial milestones with exact array indices.

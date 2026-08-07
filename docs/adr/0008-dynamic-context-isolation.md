@@ -8,29 +8,34 @@ Accepted
 
 ## Context
 
-Following the implementation of the 30:10 saturated market (ADR 0006), preliminary UI audits revealed a critical HCI failure: Signal-to-Noise degradation. Presenting 30 concurrent preference vectors during an execution breakpoint forced the user into an ocular search loop. This artifact threatened the validity of the NASA-TLX endpoints by conflating algorithmic reasoning latency ($T_{cognitive}$) with interface scanning fatigue (Hick-Hyman Law violation).
+Following the implementation of the 16:4 saturated market (ADR 0006), preliminary UI audits for the Interactive DAG View revealed a risk of Signal-to-Noise degradation. While 20 nodes is structurally compact, presenting all concurrent preference vectors simultaneously during an execution breakpoint forces the user to visually filter inactive data. To isolate algorithmic reasoning latency ($T_{cognitive}$) and prevent interface scanning fatigue (Hick-Hyman Law violation), the reactive view must aggressively manage visual attention.
 
 ## Decision
 
-The view layer will implement Dynamic Context Isolation. The Pinia state manager will explicitly track `activeProposerId` and `activeTargetReceiverId` during breakpoint yields. When `isSpotlightActive` evaluates to true, the UI autonomously mutes (grayscale/opacity reduction) all irrelevant DOM nodes and collapses the Preference Matrix to exclusively display the active Proposer’s trajectory and historical rejections.
+The Interactive DAG View implements Dynamic Context Isolation. The Pinia state manager explicitly tracks `activeProposerId` and `activeTargetReceiverId` during breakpoint yields. The UI autonomously mutes (grayscale/opacity reduction) all irrelevant DOM nodes and collapses the Preference Matrix to exclusively display the active Proposer’s trajectory and historical rejections.
 
 ## Consequences
 
-- **Positive:** Isolates the independent variable. The measured latency now reflects pure mathematical evaluation rather than visual search time.
+- **Positive:** Mathematically isolates the independent variable. The measured latency in the experimental condition reflects pure mathematical evaluation rather than visual search time.
 - **Positive:** Elevates the application to enterprise-grade observability standards, proving the capacity to build reactive, noise-filtering telemetry dashboards.
 - **Negative:** Introduces state-synchronisation complexity; the UI mask will break if the generator engine fails to pass accurate identifiers to the store during a breakpoint yield.
 
-## Amendments (2026-08-06)
+## Amendments (2026-08-07)
 
 ### Context Update
 
-Further system testing revealed that isolating the Proposer's vector was insufficient for bipartite matching markets. Because the Gale-Shapley protocol relies on two-sided preferences, evaluating a `DISPLACE` or `REJECT` state forced users to guess the Receiver's hidden internal ranking, which threatened to corrupt latency logs with artificial evaluation friction.
+System testing revealed two critical dependencies:
+
+1. The Gale-Shapley protocol is two-sided. Isolating the Proposer is insufficient; the user must see the Receiver's internal priority ranking to deduce a `DISPLACE` or `REJECT` state without guessing.
+2. The counterbalanced experimental crossover design requires a control condition. If the Spotlight Paradigm remains active during the Static Baseline task, the baseline is corrupted.
 
 ### Amended Decision
 
-The Spotlight Paradigm is extended to inject a **Micro-Evaluation Queue** directly into the prediction module. The system reads `receiverInvertedRanks` from the global store and dynamically renders a just-in-time, sorted priority list displaying _only_ the active applicant and the target receiver's current occupants.
+1. **Micro-Evaluation Queue:** The Spotlight Paradigm is extended to display a sorted priority list showing only the active applicant and the target receiver's current occupants. To prevent structural DOM shifting, this queue is rendered within a strictly pre-allocated, rigid spatial bounding box adjacent to the state graph. It is explicitly kept out of the standardised prediction modal.
+2. **Strict Baseline Disablement:** The entire Dynamic Context Isolation protocol (node muting, array collapsing, and micro-evaluation queues) is strictly bound to `v-if="!isStatic"`. When evaluating the Static control task, the Spotlight is completely disabled, rendering the unmasked 16:4 Isomorphic Snapshot (ADR 0003).
 
 ### Amended Consequences
 
-- **Positive:** Eradicates blind guessing from the experimental task, ensuring recorded latency ($T_{cognitive}$) reflects clean deductive reasoning.
-- **Positive:** Avoids cognitive collapse by refusing to render a secondary 10x30 global matrix panel.
+- **Positive:** Eradicates blind guessing in the interactive task by providing just-in-time contextual cross-reference data.
+- **Positive:** Protects the experimental control group by ensuring the visual scanning load (the absence of the Spotlight) remains the defining delta between the two task conditions.
+- **Negative:** Requires aggressive conditional template logic within Vue and strict CSS height/width bounding boxes to ensure the appearance/disappearance of the Micro-Evaluation Queue does not trigger DOM layout reflows that could shift the physical $(x, y)$ coordinates of the prediction modal, which would violate Fitts's Law.

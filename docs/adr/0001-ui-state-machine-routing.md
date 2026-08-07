@@ -8,15 +8,15 @@ Accepted
 
 ## Context
 
-The application requires a linear progression of screens for the HCI study: Participant Information Sheet -> Consent Gateway -> Task A -> Task B -> Debrief. We need to determine how to manage navigation between these views.
+The application requires a strict, linear progression of distinct views to execute the counterbalanced crossover HCI study protocol: Participant Information Sheet (PIS) -> Consent Gateway -> Pre-Task Training Orientation -> Task 1 (Static or Reactive) -> Survey 1 (NASA-TLX & SUS) -> Task 2 (Alternate Condition) -> Survey 2 (NASA-TLX & SUS) -> Unconstrained Sandbox -> Debrief. We must guarantee that participants cannot manipulate the client viewport or break the sequence execution mid-session.
 
 ## Decision
 
-We will reject standard URL-based routing (e.g., `vue-router`) in favour of a centralised Pinia state enum combined with Vue conditional rendering (`v-if`).
+We reject standard URL-based routing (e.g., `vue-router`) in favour of a centralised Pinia state enum (`SessionPhase`) combined with strict Vue conditional component injection (`v-if` / `v-else-if`).
 
 ## Consequences
 
-- **Positive:** Eliminates the risk of participants manually altering URLs to bypass consent or skip tasks.
-- **Positive:** Reduces JavaScript bundle size, improving initial load time.
-- **Positive:** Enforces strict, deterministic linear flow control managed entirely by the global state.
-- **Negative:** The application will not support standard browser "Back/Forward" button navigation (which is desired behaviour for a controlled HCI study).
+- **Positive:** Mathematically eliminates the risk of participants manually altering URL paths to bypass consent gateways, skip active simulation tasks, or corrupt latency metrics.
+- **Positive:** Minimises JavaScript bundle overhead by stripping routing dependencies, optimising initial execution container speed.
+- **Positive:** Enforces strict, deterministic linear sequence boundaries managed entirely by an unalterable global application store.
+- **Negative:** Destroys standard browser "Back/Forward" history navigation hooks, which is desired operational behaviour to maintain a controlled, sandboxed testing environment.
