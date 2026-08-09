@@ -33,7 +33,9 @@ export const useMatchingStore = defineStore('matching', {
     },
 
     isComplete(state): boolean {
-      return state.currentState?.isComplete ?? false
+      // Use the explicit state argument to completely decouple recursive state resolution errors
+      const current = state.stateLedger[state.tickIndex]
+      return current ? current.isComplete : false
     },
   },
 
@@ -106,35 +108,40 @@ export const useMatchingStore = defineStore('matching', {
     ) {
       const { type, proposerId, receiverId, displacedId } = event
 
-      if (proposerId && proposers[proposerId]) {
+      // Extract and explicitly narrow object scopes to satisfy strict type assertions
+      const p = proposerId ? proposers[proposerId] : undefined
+      const r = receiverId ? receivers[receiverId] : undefined
+      const d = displacedId ? proposers[displacedId] : undefined
+
+      if (p) {
         if (type === 'PROPOSE' || type === 'BREAKPOINT') {
-          proposers[proposerId].nextProposalIndex++
+          p.nextProposalIndex++
         }
       }
 
-      if (type === 'ACCEPT' && proposerId && receiverId) {
-        proposers[proposerId].match = receiverId
-        receivers[receiverId].matches.push(proposerId)
+      if (type === 'ACCEPT' && p && r && proposerId && receiverId) {
+        p.match = receiverId
+        r.matches.push(proposerId)
         const pIndex = freeProposers.indexOf(proposerId)
         if (pIndex > -1) freeProposers.splice(pIndex, 1)
       }
 
-      if (type === 'REJECT' && proposerId && receiverId) {
-        proposers[proposerId].match = null
+      if (type === 'REJECT' && p && r && proposerId) {
+        p.match = null
         const pIndex = freeProposers.indexOf(proposerId)
         if (pIndex === -1) freeProposers.push(proposerId)
       }
 
-      if (type === 'DISPLACE' && proposerId && receiverId && displacedId) {
-        // Release displaced occupant back to the tracking frame pool
-        proposers[displacedId].match = null
+      if (type === 'DISPLACE' && p && r && d && proposerId && receiverId && displacedId) {
+        // Safe eviction operation inside the isolated framing array
+        d.match = null
         freeProposers.push(displacedId)
-        const dIndex = receivers[receiverId].matches.indexOf(displacedId)
-        if (dIndex > -1) receivers[receiverId].matches.splice(dIndex, 1)
+        const dIndex = r.matches.indexOf(displacedId)
+        if (dIndex > -1) r.matches.splice(dIndex, 1)
 
-        // Bind incoming proposal selection
-        proposers[proposerId].match = receiverId
-        receivers[receiverId].matches.push(proposerId)
+        // Bind incoming tracking structures safely
+        p.match = receiverId
+        r.matches.push(proposerId)
         const pIndex = freeProposers.indexOf(proposerId)
         if (pIndex > -1) freeProposers.splice(pIndex, 1)
       }

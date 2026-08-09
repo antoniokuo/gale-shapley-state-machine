@@ -1,288 +1,239 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
-import { useGaleShapleyStore as useEngineStore } from '../stores/galeShapleyStore'
+import { computed } from 'vue'
+import { useMatchingStore } from '../stores/matchingStore'
 import PredictionModal from './PredictionModal.vue'
 
-const store = useEngineStore()
-const isDevMode = ref(false)
+const props = defineProps<{
+  isStatic: boolean
+}>()
 
-// Bubble the prediction event up to App.vue so telemetry logic stays centralized
+const store = useMatchingStore()
+
 defineEmits<{
   (e: 'submit-prediction', payload: any): void
 }>()
 
-onMounted(() => {
-  const params = new URLSearchParams(window.location.search)
-  isDevMode.value = params.get('mode') === 'dev'
-})
+// --------------------------------------------------
+// STATE & ISOLATION COMPUTATIONS
+// --------------------------------------------------
+const currentState = computed(() => store.currentState)
+const activeDataset = computed(() => store.activeDataset)
 
-// Computed state to trigger the global dimming effect
-const isSpotlightActive = computed(() => store.activeProposerId !== null)
+// Spotlight is strictly disabled during the Static Control baseline (ADR 0008 & 0003)
+const isSpotlightActive = computed(() => !props.isStatic && store.isAwaitingUserInput)
 
-const getProposerStatusClass = (status: string) => {
-  switch (status) {
-    case 'PROPOSING':
-      return 'bg-blue-600 text-white border-blue-950 shadow-[4px_4px_0px_0px_rgba(30,58,138,1)] scale-105 z-10'
-    case 'HELD':
-      return 'bg-emerald-400 text-black border-emerald-950 shadow-[4px_4px_0px_0px_rgba(6,78,59,1)]'
-    case 'REJECTED':
-      return 'bg-red-600 text-white border-red-950 shadow-[4px_4px_0px_0px_rgba(127,29,29,1)] opacity-90'
-    default:
-      return 'bg-white text-black border-neutral-950 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+const isMuted = (nodeId: string) => {
+  if (!isSpotlightActive.value) return false
+  return store.activeProposerId !== nodeId && store.activeTargetReceiverId !== nodeId
+}
+
+// --------------------------------------------------
+// VISUAL RENDERING ENGINES (ADR 0003 & 0007)
+// --------------------------------------------------
+const getProposerVisuals = (proposerId: string) => {
+  const pState = currentState.value?.proposers[proposerId]
+  const isActive = store.activeProposerId === proposerId
+
+  // STATIC BASELINE: Absolute monochrome polarity. Zero attention guidance.
+  if (props.isStatic) {
+    if (isActive && store.isAwaitingUserInput) {
+      return 'bg-neutral-50 border-neutral-900 text-neutral-950 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
+    }
+    return pState?.match
+      ? 'bg-neutral-200 border-neutral-900 text-neutral-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+      : 'bg-white border-neutral-900 text-neutral-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
   }
+
+  // INTERACTIVE DAG VIEW: Semantic enterprise colour tokens.
+  if (isActive)
+    return 'bg-blue-600 text-white border-blue-950 shadow-[4px_4px_0px_0px_rgba(30,58,138,1)] scale-105 z-10'
+  if (pState?.match)
+    return 'bg-emerald-400 text-black border-emerald-950 shadow-[4px_4px_0px_0px_rgba(6,78,59,1)]'
+
+  return 'bg-white text-black border-neutral-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
 }
 
-// FIX: Safely access the array and guard against null to satisfy strict TypeScript
-const getProposerPrefs = (proposerId: string | null) => {
-  if (!proposerId) return []
-  return store.receiverPreferences[proposerId] || []
+const getReceiverVisuals = (receiverId: string) => {
+  if (props.isStatic) return 'border-neutral-900 bg-white text-neutral-950'
+  return isMuted(receiverId)
+    ? 'border-neutral-900 bg-neutral-100 opacity-25 grayscale'
+    : 'border-neutral-900 bg-neutral-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
 }
 
-// FIX: Computes the visual strike-through logic securely
-const getPrefVisualState = (proposerId: string | null, currentTargetInArray: string) => {
-  if (!proposerId || !store.activeTargetReceiverId) return 'PENDING'
-
-  const prefs = getProposerPrefs(proposerId)
-  const activeTargetIndex = prefs.indexOf(store.activeTargetReceiverId)
-  const checkingIndex = prefs.indexOf(currentTargetInArray)
-
-  if (checkingIndex < activeTargetIndex) return 'REJECTED' // Strikethrough
-  if (checkingIndex === activeTargetIndex) return 'ACTIVE' // Highlight
-  return 'PENDING' // Normal
+const getOccupantVisuals = () => {
+  if (props.isStatic) return 'bg-neutral-200 text-neutral-950 border-neutral-900'
+  return 'bg-emerald-400 text-black border-emerald-950'
 }
 </script>
 
 <template>
-  <div class="w-full max-w-7xl mx-auto flex flex-col space-y-6 font-mono text-black">
+  <div class="w-full max-w-7xl mx-auto flex flex-col space-y-6 font-mono text-neutral-950">
     <div
-      class="w-full border-4 border-neutral-900 bg-amber-50 p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-base font-sans font-bold leading-relaxed transition-all duration-300"
-      :class="isSpotlightActive ? 'ring-4 ring-blue-500 ring-offset-4 scale-[1.01]' : ''"
+      class="w-full border-4 border-neutral-900 bg-neutral-50 p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300"
+      :class="{
+        'ring-4 ring-neutral-950 ring-offset-4': store.isAwaitingUserInput && props.isStatic,
+        'ring-4 ring-blue-500 ring-offset-4': isSpotlightActive,
+      }"
     >
       <span
-        class="font-black uppercase text-black font-mono block text-sm tracking-widest mb-2 border-b-2 border-neutral-900 pb-1"
+        class="font-black uppercase text-neutral-950 block text-sm tracking-widest mb-2 border-b-2 border-neutral-900 pb-1"
       >
-        &sect; Active Experimental Task Objective
+        &sect; Task Condition:
+        {{ props.isStatic ? 'Static Isomorphic Baseline' : 'Interactive DAG View' }}
       </span>
-      <span v-if="!isSpotlightActive">
-        Observe the background execution vectors. The engine is running autonomously.
+      <span v-if="!store.isAwaitingUserInput" class="font-bold">
+        State engine ready. Awaiting traversal execution.
       </span>
-      <span v-else class="text-blue-700">
-        System halted. Evaluate the isolated node states below and submit your prediction to resume.
+      <span
+        v-else
+        class="font-bold"
+        :class="!props.isStatic ? 'text-blue-700' : 'text-neutral-950'"
+      >
+        EXECUTION HALTED. Evaluate the system topology and predict the immediate downstream
+        algorithmic transition.
       </span>
-    </div>
-
-    <div
-      v-if="isDevMode"
-      class="w-full border-4 border-blue-950 bg-blue-100 p-4 shadow-[6px_6px_0px_0px_rgba(30,58,138,1)]"
-    >
-      <div class="flex items-center justify-between">
-        <div>
-          <span class="text-sm font-black text-blue-950 uppercase tracking-wider block"
-            >Dev-Telemetry Panel Active</span
-          >
-          <p class="text-xs font-sans font-bold text-neutral-900 mt-1">
-            Exposing execution clock loops. Drag toggle grid to modify tick rate parameters.
-          </p>
-        </div>
-        <div class="flex items-center space-x-4">
-          <input
-            type="range"
-            min="100"
-            max="2000"
-            step="100"
-            v-model.number="store.tickRate"
-            class="accent-blue-700 cursor-pointer h-3 bg-neutral-300 border-2 border-neutral-500 rounded-none w-48"
-          />
-          <span
-            class="text-sm font-black bg-white px-3 py-1.5 border-4 border-blue-950 min-w-[70px] text-center"
-            >{{ store.tickRate }}ms</span
-          >
-        </div>
-      </div>
     </div>
 
     <div class="grid grid-cols-12 gap-6 pt-2 items-start">
-      <div class="col-span-4 space-y-4 relative">
+      <div class="col-span-3 space-y-4">
         <h3 class="text-xl font-black uppercase border-b-4 border-neutral-900 pb-2 mb-2">
-          Receivers (Cap: 3)
+          Receivers (C=3)
         </h3>
 
         <div
-          v-for="(holds, receiverId) in store.receiverHolds"
+          v-for="(rState, receiverId) in currentState?.receivers"
           :key="receiverId"
           :class="[
-            'border-4 border-neutral-900 bg-neutral-100 p-4 min-h-[120px] flex flex-col justify-between transition-all duration-500 ease-in-out',
-            isSpotlightActive && store.activeTargetReceiverId !== receiverId
-              ? 'opacity-25 grayscale blur-[1px] shadow-none'
-              : 'opacity-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]',
+            'border-4 p-4 min-h-[110px] flex flex-col justify-between transition-all duration-300',
+            getReceiverVisuals(receiverId as string),
           ]"
         >
           <span
-            class="font-black text-sm text-black bg-neutral-300 px-3 py-1 border-2 border-neutral-900 self-start shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-            >{{ receiverId }}</span
+            class="font-black text-sm px-3 py-1 border-2 border-neutral-900 self-start shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white"
           >
+            {{ receiverId }}
+          </span>
 
-          <TransitionGroup name="list-flip" tag="div" class="flex flex-wrap gap-2 mt-4 relative">
+          <div class="flex flex-wrap gap-2 mt-4">
             <div
-              v-for="proposerId in holds"
-              :key="proposerId"
-              class="px-3 py-2 bg-emerald-400 text-black border-4 border-emerald-950 text-sm font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-300"
+              v-for="occupantId in rState.matches"
+              :key="occupantId"
+              :class="[
+                'px-3 py-1.5 border-4 text-sm font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]',
+                getOccupantVisuals(),
+              ]"
             >
-              {{ proposerId }}
+              {{ occupantId }}
             </div>
             <div
-              v-if="holds.length === 0"
-              :key="'empty-' + receiverId"
-              class="text-neutral-500 font-bold text-sm font-sans italic py-1"
+              v-if="rState.matches.length === 0"
+              class="text-neutral-500 font-bold text-sm italic py-1"
             >
-              Awaiting offers...
+              Empty Slot
             </div>
-          </TransitionGroup>
+          </div>
         </div>
       </div>
 
-      <div class="col-span-5 relative w-full flex flex-col items-center">
-        <template v-if="isSpotlightActive">
-          <PredictionModal @submit="(payload) => $emit('submit-prediction', payload)" />
-        </template>
-
-        <template v-else>
+      <div class="col-span-6 flex flex-col items-center space-y-8">
+        <div class="w-full">
           <h3
             class="text-xl font-black uppercase border-b-4 border-neutral-900 pb-2 mb-4 w-full text-left"
           >
-            Proposers Pool
+            Proposers (N=16)
           </h3>
-          <div class="grid grid-cols-3 gap-3 w-full">
+
+          <div class="grid grid-cols-4 gap-3 w-full">
             <div
-              v-for="proposer in store.proposers"
-              :key="proposer.id"
+              v-for="proposerId in store.spatialProposerOrder"
+              :key="proposerId"
               :class="[
-                'border-4 p-3 flex flex-col items-center justify-center font-black transition-all duration-500 ease-in-out min-h-[85px]',
-                getProposerStatusClass(proposer.status),
+                'border-4 p-3 flex flex-col items-center justify-center font-black transition-all duration-300 min-h-[85px]',
+                getProposerVisuals(proposerId),
+                isMuted(proposerId) ? 'opacity-25 grayscale shadow-none' : '',
               ]"
             >
-              <span class="text-xl tracking-tight">{{ proposer.id }}</span>
+              <span class="text-lg tracking-tight">{{ proposerId }}</span>
               <span
-                class="text-[10px] uppercase font-black tracking-tighter mt-1 border-t-2 border-current pt-1 w-full text-center block"
+                class="text-[10px] uppercase font-black mt-1 border-t-2 border-current pt-1 w-full text-center block"
               >
-                <template v-if="proposer.status === 'PROPOSING'"
-                  >Proposing &rarr; {{ proposer.activeTarget }}</template
+                <template v-if="currentState?.proposers[proposerId]?.match">
+                  {{ currentState?.proposers[proposerId].match }}
+                </template>
+                <template
+                  v-else-if="store.activeProposerId === proposerId && store.isAwaitingUserInput"
                 >
-                <template v-else-if="proposer.status === 'HELD'"
-                  >Held by {{ proposer.activeTarget }}</template
-                >
-                <template v-else-if="proposer.status === 'REJECTED'">Rejected</template>
-                <template v-else>Idle Pool</template>
+                  Eval
+                </template>
+                <template v-else> Idle </template>
               </span>
             </div>
           </div>
-        </template>
+        </div>
+
+        <div
+          class="w-full min-h-[120px] flex items-center justify-center border-4 border-dashed border-neutral-300 bg-neutral-50 relative p-4"
+        >
+          <div
+            v-if="!store.isAwaitingUserInput"
+            class="text-neutral-400 font-black uppercase text-sm tracking-widest text-center"
+          >
+            Prediction Input Inactive
+          </div>
+          <PredictionModal
+            v-if="store.isAwaitingUserInput"
+            :isStatic="props.isStatic"
+            @submit="(payload) => $emit('submit-prediction', payload)"
+            class="absolute w-full h-full z-20"
+          />
+        </div>
       </div>
 
-      <div class="col-span-3">
+      <div class="col-span-3 relative">
         <h3 class="text-xl font-black uppercase border-b-4 border-neutral-900 pb-2 mb-4">
-          Priority Map
+          Vector Context
         </h3>
 
         <div
-          class="border-4 border-neutral-900 bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-h-[700px] overflow-y-auto text-sm space-y-3 transition-all duration-500"
+          class="border-4 border-neutral-900 bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] min-h-[600px]"
         >
-          <div v-if="!isSpotlightActive" class="text-center py-10 space-y-2 opacity-50">
-            <span class="block text-2xl font-black animate-pulse">...</span>
-            <span
-              class="block text-xs font-black uppercase font-sans tracking-widest text-neutral-500"
-              >Matrix tracking hidden vectors</span
-            >
-            <span class="block text-[10px] italic font-sans font-bold text-neutral-400"
-              >Context will isolate upon breakpoint</span
+          <div v-if="props.isStatic" class="space-y-6">
+            <div class="font-black text-sm border-b-2 border-neutral-900 pb-1">
+              RAW PROPOSER VECTORS
+            </div>
+            <div class="text-[11px] font-mono whitespace-pre-wrap leading-relaxed text-neutral-800">
+              <div v-for="(prefs, pId) in activeDataset?.proposerPreferences" :key="pId">
+                <span class="font-black text-black">{{ pId }}:</span> [{{ prefs.join(', ') }}]
+              </div>
+            </div>
+            <div class="font-black text-sm border-b-2 border-neutral-900 pb-1 mt-6">
+              RAW RECEIVER VECTORS
+            </div>
+            <div class="text-[11px] font-mono whitespace-pre-wrap leading-relaxed text-neutral-800">
+              <div v-for="(ranks, rId) in activeDataset?.receiverPreferences" :key="rId">
+                <span class="font-black text-black">{{ rId }}:</span> [{{ ranks.join(', ') }}]
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else-if="isSpotlightActive"
+            class="w-full h-full border-4 border-dashed border-blue-300 bg-blue-50 flex flex-col items-center justify-center text-center p-4"
+          >
+            <span class="font-black text-blue-900 text-lg mb-2 block">&lt;MicroQueue /&gt;</span>
+            <span class="text-xs font-bold text-blue-700"
+              >Dynamic Context Isolation component will mount here (Phase 5).</span
             >
           </div>
 
-          <div v-else class="animate-fade-in">
-            <div
-              class="font-black uppercase border-b-2 border-neutral-950 pb-1 text-center bg-blue-100 text-blue-900 py-1 mb-4 border-2 border-blue-900 shadow-[4px_4px_0px_0px_rgba(30,58,138,1)]"
+          <div v-else class="text-center py-20 opacity-50">
+            <span class="block text-2xl font-black animate-pulse">...</span>
+            <span class="block text-xs font-black uppercase tracking-widest"
+              >Awaiting Traversal</span
             >
-              Active Target Isolation
-            </div>
-
-            <div
-              class="flex flex-col border-2 border-neutral-900 bg-neutral-50 p-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-            >
-              <span
-                class="font-black text-blue-700 text-xl border-b-2 border-neutral-300 pb-2 mb-3 text-center"
-                >Proposer: {{ store.activeProposerId }}</span
-              >
-
-              <div class="flex flex-col space-y-2 font-mono text-sm font-bold text-black">
-                <div
-                  v-for="(receiverObj, idx) in getProposerPrefs(store.activeProposerId!)"
-                  :key="idx"
-                  class="flex items-center justify-between px-2 py-1.5 transition-all duration-300"
-                  :class="[
-                    getPrefVisualState(store.activeProposerId!, receiverObj) === 'REJECTED'
-                      ? 'opacity-40 line-through bg-neutral-200'
-                      : '',
-                    getPrefVisualState(store.activeProposerId!, receiverObj) === 'ACTIVE'
-                      ? 'bg-blue-200 border-2 border-blue-900 shadow-[2px_2px_0px_0px_rgba(30,58,138,1)] -translate-y-0.5'
-                      : '',
-                    getPrefVisualState(store.activeProposerId!, receiverObj) === 'PENDING'
-                      ? 'opacity-70'
-                      : '',
-                  ]"
-                >
-                  <span class="text-xs text-neutral-500 w-6">{{ idx + 1 }}.</span>
-                  <span class="font-black tracking-widest text-base">{{ receiverObj }}</span>
-                  <span class="w-6 text-right text-[10px] uppercase">
-                    {{
-                      getPrefVisualState(store.activeProposerId!, receiverObj) === 'ACTIVE'
-                        ? 'Target'
-                        : ''
-                    }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <p
-              class="text-[11px] font-sans font-bold text-neutral-600 mt-4 leading-tight italic text-center"
-            >
-              Historical rejections are struck through. Current active target is highlighted.
-            </p>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.list-flip-move {
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.list-flip-enter-active,
-.list-flip-leave-active {
-  transition: all 0.3s ease;
-}
-.list-flip-enter-from,
-.list-flip-leave-to {
-  opacity: 0;
-  transform: scale(0.8);
-}
-.list-flip-leave-active {
-  position: absolute;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.animate-fade-in {
-  animation: fadeIn 0.4s ease-out forwards;
-}
-</style>
