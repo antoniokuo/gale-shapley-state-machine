@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useMatchingStore } from '../stores/matchingStore'
 import PredictionModal from './PredictionModal.vue'
+import MicroQueue from './MicroQueue.vue'
 
 const props = defineProps<{
   isStatic: boolean
@@ -216,14 +217,8 @@ const getOccupantVisuals = () => {
             </div>
           </div>
 
-          <div
-            v-else-if="isSpotlightActive"
-            class="w-full h-full border-4 border-dashed border-blue-300 bg-blue-50 flex flex-col items-center justify-center text-center p-4"
-          >
-            <span class="font-black text-blue-900 text-lg mb-2 block">&lt;MicroQueue /&gt;</span>
-            <span class="text-xs font-bold text-blue-700"
-              >Dynamic Context Isolation component will mount here (Phase 5).</span
-            >
+          <div v-else-if="isSpotlightActive" class="w-full h-full">
+            <MicroQueue />
           </div>
 
           <div v-else class="text-center py-20 opacity-50">
