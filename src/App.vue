@@ -7,6 +7,7 @@ import PISView from './components/PISView.vue'
 import ConsentGateway from './components/ConsentGateway.vue'
 import DebriefView from './components/DebriefView.vue'
 import MatchingGrid from './components/MatchingGrid.vue'
+import SurveyInstrument from './components/SurveyInstrument.vue'
 import Sandbox from './components/Sandbox.vue'
 
 import taskA from './data/taskA.json'
@@ -40,7 +41,7 @@ const executeMarketPrecomputation = async (dataset: DatasetPayload) => {
 }
 
 // --------------------------------------------------
-// ACTIVE TASK PROPERTIES
+// ACTIVE TASK PROPERTIES & TELEMETRY
 // --------------------------------------------------
 const isCurrentTaskStatic = computed(() => {
   if (session.currentPhase === 'TASK_1') return session.task1Type === 'STATIC'
@@ -78,6 +79,50 @@ const handleTaskProgression = async () => {
     await session.advanceTo('SURVEY_1')
   } else if (session.currentPhase === 'TASK_2') {
     await session.advanceTo('SURVEY_2')
+  }
+}
+
+// --------------------------------------------------
+// PSYCHOMETRIC SURVEY PIPELINE (SOP Section 2 & 3)
+// --------------------------------------------------
+const activeConditionLabel = computed(() => {
+  if (session.currentPhase === 'SURVEY_1') {
+    return session.task1Type === 'STATIC' ? 'Static View' : 'Interactive DAG View'
+  }
+  return session.task2Type === 'STATIC' ? 'Static View' : 'Interactive DAG View'
+})
+
+const handleSurveySubmission = async (payload: {
+  nasaTlx: Record<string, number>
+  sus: Record<number, number>
+}) => {
+  // Extract configuration parameters of the condition evaluated
+  const completedCondition =
+    session.currentPhase === 'SURVEY_1' ? session.task1Type : session.task2Type
+
+  if (!session.uuid || !completedCondition) return
+
+  try {
+    const formattedPayload = {
+      session_uuid: session.uuid,
+      condition_type: completedCondition,
+      phase_context: session.currentPhase,
+      // Flatten dimensions directly into table fields to maximize indexing signal
+      ...payload.nasaTlx,
+      ...Object.fromEntries(Object.entries(payload.sus).map(([k, v]) => [`sus_item_${k}`, v])),
+    }
+
+    // Database push hook - log locally for dev mode
+    console.table(formattedPayload)
+  } catch (e) {
+    console.error('Failed to dispatch snapshot survey values:', e)
+  }
+
+  // Advance state pointers downstream to toggle subsequent block phases
+  if (session.currentPhase === 'SURVEY_1') {
+    await session.advanceTo('TASK_2')
+  } else {
+    await session.advanceTo('SANDBOX')
   }
 }
 </script>
@@ -264,20 +309,13 @@ const handleTaskProgression = async () => {
     </div>
 
     <div
-      v-slot:placeholder-surveys
       v-else-if="session.currentPhase === 'SURVEY_1' || session.currentPhase === 'SURVEY_2'"
+      class="w-full"
     >
-      <div
-        class="max-w-xl text-center border-4 border-neutral-950 bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-      >
-        <h2 class="text-2xl font-black mb-4">SURVEY NODE GATEWAY PLACEHOLDER</h2>
-        <button
-          @click="session.advanceTo(session.currentPhase === 'SURVEY_1' ? 'TASK_2' : 'SANDBOX')"
-          class="bg-neutral-950 text-white px-4 py-2 border-2 font-bold"
-        >
-          Mock Complete Survey
-        </button>
-      </div>
+      <SurveyInstrument
+        :conditionLabel="activeConditionLabel"
+        @submit-survey="handleSurveySubmission"
+      />
     </div>
 
     <Sandbox v-else-if="session.currentPhase === 'SANDBOX'" />
