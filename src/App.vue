@@ -7,6 +7,7 @@ import PISView from './components/PISView.vue'
 import ConsentGateway from './components/ConsentGateway.vue'
 import DebriefView from './components/DebriefView.vue'
 import MatchingGrid from './components/MatchingGrid.vue'
+import Sandbox from './components/Sandbox.vue'
 
 import taskA from './data/taskA.json'
 import taskB from './data/taskB.json'
@@ -279,19 +280,7 @@ const handleTaskProgression = async () => {
       </div>
     </div>
 
-    <div v-else-if="session.currentPhase === 'SANDBOX'">
-      <div
-        class="max-w-xl text-center border-4 border-neutral-950 bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
-      >
-        <h2 class="text-2xl font-black mb-4">EXPLORATORY SANDBOX PLACEHOLDER</h2>
-        <button
-          @click="session.advanceTo('DEBRIEF')"
-          class="bg-neutral-950 text-white px-4 py-2 border-2 font-bold"
-        >
-          Terminate Session to Debrief
-        </button>
-      </div>
-    </div>
+    <Sandbox v-else-if="session.currentPhase === 'SANDBOX'" />
 
     <DebriefView v-else-if="session.currentPhase === 'DEBRIEF'" />
   </main>
