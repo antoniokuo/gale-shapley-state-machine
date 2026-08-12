@@ -233,9 +233,14 @@ const getOccupantVisuals = () => {
             </div>
 
             <div
-              class="bg-blue-50 border-2 border-blue-900 p-2.5 text-xs font-bold text-blue-900 tracking-tight leading-normal"
+              class="bg-blue-50 border-4 border-blue-900 p-3 mb-4 text-blue-950 shadow-[4px_4px_0px_0px_rgba(30,58,138,1)]"
             >
-              &rarr; Priority scans left-to-right (Leftmost item = highest priority).
+              <span class="font-black uppercase tracking-widest block mb-1 text-xs text-blue-800">
+                &rarr; Evaluation Rule
+              </span>
+              <span class="font-bold text-sm">
+                Read left-to-right. Position 1 is the highest priority.
+              </span>
             </div>
 
             <div class="space-y-3">
