@@ -78,7 +78,7 @@ const handleTaskProgression = async () => {
   if (session.currentPhase === 'TASK_1') {
     await session.advanceTo('SURVEY_1')
   } else if (session.currentPhase === 'TASK_2') {
-    await session.advanceTo('SANDBOX') // Routes securely past Survey 2 to final Sandbox arm
+    await session.advanceTo('SURVEY_2')
   }
 }
 

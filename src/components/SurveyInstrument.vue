@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useSessionStore } from '../stores/sessionStore'
 
 const session = useSessionStore()
@@ -16,7 +16,8 @@ const emit = defineEmits<{
 }>()
 
 // --- NASA-TLX State (21-point discrete scale: 0 to 20) ---
-const tlxDimensions = [
+// --- NASA-TLX State (21-point discrete scale: 0 to 20) ---
+const ttlxDimensions = [
   {
     key: 'mentalDemand',
     label: '1. Mental Demand',
@@ -45,7 +46,7 @@ const tlxDimensions = [
   {
     key: 'frustration',
     label: '6. Frustration Level',
-    desc: 'How insecure, discouraged, irritated, stressed, and annoyed versus secure, gratified, content, relaxed, and complacent did you feel?',
+    desc: 'How insecure, discouraged, irritated, stressed, and annoyed versus secure, gratified, content, relaxed, and complacent did you feel during the task?',
   },
 ]
 
@@ -107,31 +108,40 @@ const submitSurveyData = () => {
         Psychometric Evaluation Gateway
       </span>
       <h2 class="text-3xl font-black mt-3 uppercase tracking-tight">Condition Survey</h2>
-      <p
-        class="text-sm font-sans font-bold text-red-600 mt-2 leading-relaxed bg-neutral-50 p-3 border-2 border-dashed border-neutral-400"
+
+      <div
+        class="mt-4 bg-blue-50 border-l-8 border-blue-800 p-4 shadow-[2px_2px_0px_0px_rgba(30,58,138,0.2)]"
       >
-        <strong>CRITICAL DIRECTIVE:</strong> Please complete the following scales evaluating
-        <span class="underline uppercase font-mono font-black">SOLELY</span> the specific interface
-        mode you <span class="underline uppercase font-mono font-black">JUST</span> completed in the
-        preceding task ({{ props.conditionLabel }}). Do not evaluate the platform as a whole or
-        prior task modes.
-      </p>
+        <p class="text-base font-sans font-bold text-blue-950 leading-relaxed">
+          <strong class="uppercase text-blue-800 tracking-wider">Critical Directive:</strong><br />
+          Please complete the following scales evaluating
+          <span class="underline uppercase font-mono font-black">SOLELY</span> the specific
+          interface mode you
+          <span class="underline uppercase font-mono font-black">JUST</span> completed in the
+          preceding task (<strong class="bg-blue-200 px-1">{{ props.conditionLabel }}</strong
+          >). Do not evaluate the platform as a whole or prior task modes.
+        </p>
+      </div>
     </div>
 
-    <div class="space-y-6 mb-10">
+    <div class="space-y-6 mb-12">
       <h3
-        class="text-xl font-black uppercase bg-neutral-100 p-2 border-2 border-neutral-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+        class="text-2xl font-black uppercase bg-neutral-100 p-3 border-4 border-neutral-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] tracking-tight"
       >
-        Part 1: Task Load Index (NASA-TLX) [cite: 42]
+        Part 1: Task Load Index (NASA-TLX)
       </h3>
 
       <div
-        v-for="dim in tlxDimensions"
+        v-for="dim in ttlxDimensions"
         :key="dim.key"
-        class="border-2 border-neutral-900 p-4 bg-neutral-50"
+        class="border-4 border-neutral-900 p-5 bg-neutral-50"
       >
-        <label class="block text-base font-black uppercase mb-1">{{ dim.label }}</label>
-        <p class="text-xs font-sans font-bold text-neutral-600 mb-3 leading-snug">{{ dim.desc }}</p>
+        <label class="block text-lg font-black uppercase mb-2 text-neutral-950">{{
+          dim.label
+        }}</label>
+        <p class="text-sm font-sans font-bold text-neutral-700 mb-5 leading-relaxed">
+          {{ dim.desc }}
+        </p>
 
         <div class="flex items-center space-x-4">
           <input
@@ -140,16 +150,16 @@ const submitSurveyData = () => {
             max="20"
             step="1"
             v-model.number="nasaTlxResponses[dim.key]"
-            class="flex-grow accent-neutral-950 h-2 bg-neutral-200 border border-neutral-400 cursor-pointer"
+            class="flex-grow accent-neutral-950 h-3 bg-neutral-300 border-2 border-neutral-500 cursor-pointer"
           />
           <span
-            class="text-sm font-black bg-white px-3 py-1 border-2 border-neutral-900 min-w-[50px] text-center"
+            class="text-lg font-black bg-white px-4 py-2 border-4 border-neutral-900 min-w-[60px] text-center shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
             {{ nasaTlxResponses[dim.key] }}
           </span>
         </div>
         <div
-          class="flex justify-between text-[9px] font-bold text-neutral-400 uppercase tracking-wider mt-1 font-sans"
+          class="flex justify-between text-xs font-black text-neutral-500 uppercase tracking-widest mt-2 font-sans"
         >
           <span>{{ dim.key === 'performance' ? 'Perfect (0)' : 'Very Low (0)' }}</span>
           <span>{{ dim.key === 'performance' ? 'Failure (20)' : 'Very High (20)' }}</span>
@@ -157,32 +167,32 @@ const submitSurveyData = () => {
       </div>
     </div>
 
-    <div class="space-y-6 mb-8">
+    <div class="space-y-6 mb-10">
       <h3
-        class="text-xl font-black uppercase bg-neutral-100 p-2 border-2 border-neutral-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+        class="text-2xl font-black uppercase bg-neutral-100 p-3 border-4 border-neutral-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] tracking-tight"
       >
-        Part 2: System Usability Scale (SUS) [cite: 58]
+        Part 2: System Usability Scale (SUS)
       </h3>
 
       <div
         v-for="stem in susStems"
         :key="stem.id"
-        class="border-2 border-neutral-900 p-4 bg-neutral-50 flex flex-col space-y-3"
+        class="border-4 border-neutral-900 p-5 bg-neutral-50 flex flex-col space-y-4"
       >
-        <p class="text-sm font-bold leading-normal">
-          <span class="font-mono font-black text-neutral-400 mr-1">{{ stem.id }}.</span>
+        <p class="text-base font-bold leading-relaxed text-neutral-900">
+          <span class="font-mono font-black text-neutral-500 mr-2 text-lg">{{ stem.id }}.</span>
           {{ stem.text }}
         </p>
 
-        <div class="grid grid-cols-5 gap-2 text-center">
+        <div class="grid grid-cols-5 gap-3 text-center">
           <label
             v-for="val in [1, 2, 3, 4, 5]"
             :key="val"
             :class="[
-              'border-2 p-2 text-xs font-black cursor-pointer transition-colors',
+              'border-4 p-3 text-sm font-black cursor-pointer transition-all',
               susResponses[stem.id] === val
-                ? 'bg-neutral-950 text-white border-neutral-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-                : 'bg-white border-neutral-300 text-neutral-600 hover:bg-neutral-100',
+                ? 'bg-neutral-950 text-white border-neutral-950 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] scale-105'
+                : 'bg-white border-neutral-400 text-neutral-700 hover:bg-neutral-200 hover:border-neutral-600',
             ]"
           >
             <input
@@ -196,7 +206,7 @@ const submitSurveyData = () => {
           </label>
         </div>
         <div
-          class="flex justify-between text-[9px] font-bold text-neutral-400 uppercase tracking-wider font-sans px-1"
+          class="flex justify-between text-xs font-black text-neutral-500 uppercase tracking-widest font-sans px-1 pt-1"
         >
           <span>Strongly Disagree (1)</span>
           <span>Neutral (3)</span>
@@ -207,7 +217,7 @@ const submitSurveyData = () => {
 
     <button
       @click="submitSurveyData"
-      class="w-full font-black uppercase py-4 bg-neutral-950 text-white text-lg border-4 border-neutral-950 hover:bg-neutral-800 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-x-0.5 active:translate-y-0.5"
+      class="w-full font-black uppercase py-5 bg-neutral-950 text-white text-xl border-4 border-neutral-950 hover:bg-neutral-800 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] active:translate-x-1 active:translate-y-1 active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
     >
       Commit Psychometric Record &rarr;
     </button>
