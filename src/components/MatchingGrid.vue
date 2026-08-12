@@ -232,33 +232,37 @@ const getOccupantVisuals = () => {
               Receiver Preference Rankings
             </div>
 
+            <div
+              class="bg-blue-50 border-2 border-blue-900 p-2.5 text-xs font-bold text-blue-900 tracking-tight leading-normal"
+            >
+              &rarr; Priority scans left-to-right (Leftmost item = highest priority).
+            </div>
+
             <div class="space-y-3">
               <div
                 v-for="(ranks, rId) in activeDataset?.receiverPreferences"
                 :key="rId"
-                class="bg-neutral-100 border-2 border-neutral-300 p-3"
+                class="bg-neutral-100 border-2 border-neutral-300 p-3 flex flex-col"
               >
                 <span
-                  class="font-black text-black bg-neutral-300 px-2 py-0.5 border border-neutral-400 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] block mb-2 w-max"
+                  class="font-black text-xs text-black bg-neutral-300 px-2 py-0.5 border border-neutral-400 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] block mb-3 w-max"
                 >
                   {{ rId }}
                 </span>
-                <div class="flex flex-wrap gap-1.5 font-mono text-sm font-bold text-neutral-950">
+
+                <div
+                  class="flex items-center space-x-1.5 font-mono text-sm font-bold text-neutral-950 overflow-x-auto whitespace-nowrap pb-1 scrollbar-thin"
+                >
                   <span
                     v-for="(node, index) in ranks"
                     :key="index"
-                    class="w-9 text-center border border-neutral-300 bg-white py-0.5"
+                    class="w-9 shrink-0 text-center border border-neutral-300 bg-white py-0.5 shadow-[1px_1px_0px_0px_rgba(0,0,0,0.1)]"
                   >
                     {{ node }}
                   </span>
                 </div>
               </div>
             </div>
-
-            <p class="text-[11px] font-sans font-bold text-neutral-600 mt-2 leading-tight italic">
-              * Priority reads Left-to-Right (Index 0 = Highest Priority). Proposer arrays are
-              structurally hidden as the engine automates outbound routing.
-            </p>
           </div>
 
           <div v-else-if="isSpotlightActive" class="animate-fade-in w-full h-full">
@@ -293,5 +297,21 @@ const getOccupantVisuals = () => {
 }
 .animate-fade-in {
   animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Minimalist styling to keep custom track clear and readable */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 0px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 </style>
