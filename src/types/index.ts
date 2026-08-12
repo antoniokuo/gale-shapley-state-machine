@@ -1,11 +1,10 @@
-// src/types/index.ts
-
 /**
  * PHASE 1: DATA INGESTION SCHEMA
  * Strictly mirrors the taskA.json and taskB.json structures for V8 hydration.
  */
 export interface DatasetPayload {
   milestoneBreakpoints: string[] // Format: "P01-R01"
+  executionQueue?: string[] // INJECTED: Forces identical isomorphic execution trajectories
   proposerPreferences: Record<string, string[]>
   receiverPreferences: Record<string, string[]>
   receiverInvertedRanks: Record<string, Record<string, number>> // O(1) lookup for Micro-Evaluation Queue

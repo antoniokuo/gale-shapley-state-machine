@@ -1,5 +1,3 @@
-// src/engine/galeShapleyEngine.ts
-
 import type { DatasetPayload, EngineEvent } from '../types'
 
 /**
@@ -11,9 +9,12 @@ export async function* createGaleShapleyEngine(
   payload: DatasetPayload,
   capacity: number = 3, // Hardcoded to 3 as per ADR 0006 (16:4 capacity quota)
 ): AsyncGenerator<EngineEvent, void, unknown> {
-  const { proposerPreferences, receiverInvertedRanks, milestoneBreakpoints } = payload
+  const { proposerPreferences, receiverInvertedRanks, milestoneBreakpoints, executionQueue } =
+    payload
 
-  const proposers = Object.keys(proposerPreferences)
+  // CRITICAL FIX: Enforce deterministic isomorphic entry points.
+  // Fallback to Object.keys only if the strict queue is missing.
+  const proposers = executionQueue || Object.keys(proposerPreferences)
   const freeProposers = [...proposers]
 
   // Track the next index in the preference array for each proposer

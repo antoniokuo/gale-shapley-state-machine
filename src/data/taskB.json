@@ -1,5 +1,23 @@
 {
-  "milestoneBreakpoints": ["P07-R04", "P03-R04", "P01-R04", "P04-R01", "P13-R03"],
+  "executionQueue": [
+    "P07",
+    "P12",
+    "P03",
+    "P16",
+    "P01",
+    "P09",
+    "P14",
+    "P05",
+    "P08",
+    "P11",
+    "P04",
+    "P15",
+    "P02",
+    "P10",
+    "P06",
+    "P13"
+  ],
+  "milestoneBreakpoints": ["P07-R04", "P01-R04", "P16-R04", "P16-R03", "P15-R03"],
   "proposerPreferences": {
     "P01": ["R04", "R01", "R03", "R02"],
     "P02": ["R02", "R04", "R01", "R03"],

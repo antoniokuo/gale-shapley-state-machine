@@ -16,6 +16,11 @@ export const useMatchingStore = defineStore('matching', {
     tickIndex: 0,
     isAwaitingUserInput: false,
 
+    // Automation & Speed Showcase States (Hiring Manager Features)
+    tickRate: 800,
+    timerId: null as number | null,
+    isPlaying: false,
+
     // Spatial Anchors preventing layout recognition (ADR 0011)
     spatialProposerOrder: [] as string[],
 
@@ -33,7 +38,6 @@ export const useMatchingStore = defineStore('matching', {
     },
 
     isComplete(state): boolean {
-      // Use the explicit state argument to completely decouple recursive state resolution errors
       const current = state.stateLedger[state.tickIndex]
       return current ? current.isComplete : false
     },
@@ -45,10 +49,12 @@ export const useMatchingStore = defineStore('matching', {
      * to enable instant bidirectional time-travel with zero visual layout shifts.
      */
     async hydrateAndPrecompute(payload: DatasetPayload) {
+      this.clearPlaybackTimer()
       this.activeDataset = payload
       this.stateLedger = []
       this.tickIndex = 0
       this.isAwaitingUserInput = false
+      this.isPlaying = false
       this.activeProposerId = null
       this.activeTargetReceiverId = null
 
@@ -85,10 +91,8 @@ export const useMatchingStore = defineStore('matching', {
 
       // Exhaust the generator in the background to log all state mutations deterministically
       for await (const event of engine) {
-        // Apply mutative transitions to the tracking frame
         this.mutateFrame(proposers, receivers, freeProposers, event)
 
-        // Push a fully decoupled deep-clone snapshot to the history ledger array
         this.stateLedger.push({
           tick: currentTick++,
           proposers: JSON.parse(JSON.stringify(proposers)),
@@ -98,6 +102,9 @@ export const useMatchingStore = defineStore('matching', {
           isComplete: event.type === 'COMPLETE',
         })
       }
+
+      // Automatically kick off the execution loops upon completed hydration
+      this.startPlaybackLoop()
     },
 
     mutateFrame(
@@ -108,7 +115,6 @@ export const useMatchingStore = defineStore('matching', {
     ) {
       const { type, proposerId, receiverId, displacedId } = event
 
-      // Extract and explicitly narrow object scopes to satisfy strict type assertions
       const p = proposerId ? proposers[proposerId] : undefined
       const r = receiverId ? receivers[receiverId] : undefined
       const d = displacedId ? proposers[displacedId] : undefined
@@ -133,13 +139,11 @@ export const useMatchingStore = defineStore('matching', {
       }
 
       if (type === 'DISPLACE' && p && r && d && proposerId && receiverId && displacedId) {
-        // Safe eviction operation inside the isolated framing array
         d.match = null
         freeProposers.push(displacedId)
         const dIndex = r.matches.indexOf(displacedId)
         if (dIndex > -1) r.matches.splice(dIndex, 1)
 
-        // Bind incoming tracking structures safely
         p.match = receiverId
         r.matches.push(proposerId)
         const pIndex = freeProposers.indexOf(proposerId)
@@ -148,9 +152,48 @@ export const useMatchingStore = defineStore('matching', {
     },
 
     // --------------------------------------------------
-    // BI-DIRECTIONAL LEDGER CONTROLS (SOP Section 1.4)
+    // AUTOMATED PLAYBACK RUNNERS (Hiring Manager Architecture)
+    // --------------------------------------------------
+    startPlaybackLoop() {
+      if (this.isAwaitingUserInput || this.isComplete) return
+      this.isPlaying = true
+      this.clearPlaybackTimer()
+
+      const runTick = () => {
+        if (this.tickIndex < this.stateLedger.length - 1 && !this.isAwaitingUserInput) {
+          this.tickIndex++
+          this.evaluateCurrentTickEvent()
+
+          if (!this.isAwaitingUserInput && !this.isComplete) {
+            this.timerId = window.setTimeout(runTick, this.tickRate)
+          } else {
+            this.isPlaying = false
+          }
+        } else {
+          this.isPlaying = false
+        }
+      }
+
+      this.timerId = window.setTimeout(runTick, this.tickRate)
+    },
+
+    pausePlayback() {
+      this.isPlaying = false
+      this.clearPlaybackTimer()
+    },
+
+    clearPlaybackTimer() {
+      if (this.timerId !== null) {
+        window.clearTimeout(this.timerId)
+        this.timerId = null
+      }
+    },
+
+    // --------------------------------------------------
+    // BI-DIRECTIONAL MANUAL LEDGER CONTROLS
     // --------------------------------------------------
     stepForward() {
+      this.pausePlayback()
       if (this.tickIndex < this.stateLedger.length - 1 && !this.isAwaitingUserInput) {
         this.tickIndex++
         this.evaluateCurrentTickEvent()
@@ -158,9 +201,10 @@ export const useMatchingStore = defineStore('matching', {
     },
 
     stepBackward() {
-      if (this.tickIndex > 0 && !this.isAwaitingUserInput) {
+      this.pausePlayback()
+      if (this.tickIndex > 0) {
         this.tickIndex--
-        // Clear active spotlight masks upon regression events
+        this.isAwaitingUserInput = false
         this.activeProposerId = null
         this.activeTargetReceiverId = null
       }
@@ -174,6 +218,7 @@ export const useMatchingStore = defineStore('matching', {
         this.isAwaitingUserInput = true
         this.activeProposerId = current.activeEvent.proposerId
         this.activeTargetReceiverId = current.activeEvent.receiverId
+        this.clearPlaybackTimer()
       }
     },
 
@@ -181,7 +226,11 @@ export const useMatchingStore = defineStore('matching', {
       this.isAwaitingUserInput = false
       this.activeProposerId = null
       this.activeTargetReceiverId = null
-      this.tickIndex++ // Step directly over the intercepted barrier frame
+
+      if (this.tickIndex < this.stateLedger.length - 1) {
+        this.tickIndex++
+        this.startPlaybackLoop() // Automatically resumes loop execution smoothly
+      }
     },
   },
 })
