@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useMatchingStore } from '../stores/matchingStore'
 import { useSessionStore } from '../stores/sessionStore'
 import MatchingGrid from './MatchingGrid.vue'
@@ -15,13 +15,6 @@ const isStatic = false
 
 // Qualitative Feedback State (Survey Instrument 3)
 const qualitativeFeedback = ref('')
-
-// Ensure any lingering breakpoint locks from Task 2 are purged upon mounting
-onMounted(() => {
-  store.isAwaitingUserInput = false
-  store.activeProposerId = null
-  store.activeTargetReceiverId = null
-})
 
 const progressPercentage = computed(() => {
   if (store.stateLedger.length === 0) return 0
@@ -56,6 +49,39 @@ const jumpToExtremity = (index: number) => {
   store.activeProposerId = null
   store.activeTargetReceiverId = null
 }
+
+// --------------------------------------------------
+// KEYBOARD NAVIGATION LISTENERS (Industry Showcase)
+// --------------------------------------------------
+const handleKeyboardNavigation = (event: KeyboardEvent) => {
+  // Permanently block keyboard traversal if the gateway modal is still active
+  if (!isSandboxUnlocked.value) return
+
+  // Intercept Left Arrow key
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault()
+    safeStepBack()
+  }
+  // Intercept Right Arrow key
+  else if (event.key === 'ArrowRight') {
+    event.preventDefault()
+    safeStepForward()
+  }
+}
+
+// Ensure any lingering breakpoint locks from Task 2 are purged upon mounting
+// and bind keyboard listeners natively to the layout
+onMounted(() => {
+  store.isAwaitingUserInput = false
+  store.activeProposerId = null
+  store.activeTargetReceiverId = null
+  window.addEventListener('keydown', handleKeyboardNavigation)
+})
+
+// Meticulously tear down listeners to prevent telemetry leakage into other views
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyboardNavigation)
+})
 
 const concludeSession = async () => {
   if (session.uuid && !isFeedbackEmpty.value) {
@@ -98,9 +124,9 @@ const concludeSession = async () => {
           </p>
         </div>
         <p class="text-sm font-bold font-sans text-neutral-600 mb-8 leading-relaxed">
-          You may now freely use the timeline controls to explore the Gale-Shapley matching
-          algorithm. When you are finished exploring, you may optionally leave feedback at the
-          bottom of the page to conclude the session.
+          You may now freely use the timeline controls (or your left/right arrow keys) to explore
+          the Gale-Shapley matching algorithm. When you are finished exploring, you may optionally
+          leave feedback at the bottom of the page to conclude the session.
         </p>
         <button
           @click="isSandboxUnlocked = true"
