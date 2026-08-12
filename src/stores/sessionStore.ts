@@ -7,6 +7,7 @@ export type SessionPhase =
   | 'TRAINING'
   | 'TASK_1'
   | 'SURVEY_1'
+  | 'TRAINING_2'
   | 'TASK_2'
   | 'SURVEY_2'
   | 'SANDBOX'
