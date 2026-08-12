@@ -71,7 +71,7 @@ const handleKeyboardSubmit = (event: KeyboardEvent) => {
 const getHeaderClass = () => {
   if (props.isStatic)
     return 'bg-neutral-950 text-white border-neutral-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
-  return 'bg-blue-600 text-white border-blue-950 shadow-[2px_2px_0px_0px_rgba(30,58,138,1)]'
+  return 'bg-blue-600 text-white border-blue-950 shadow-[4px_4px_0px_0px_rgba(30,58,138,1)]'
 }
 
 const getContextBoxClass = () => {
@@ -108,7 +108,7 @@ const getActionCardClass = (action: 'ACCEPT' | 'REJECT' | 'DISPLACE') => {
 
 <template>
   <div
-    class="w-full max-w-xl border-4 border-neutral-950 bg-white p-6 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] font-mono flex flex-col justify-between"
+    class="w-full max-w-xl border-4 border-neutral-950 bg-white p-6 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] font-mono flex flex-col justify-between select-none"
     style="height: 100%; min-height: 560px"
   >
     <div>
@@ -145,12 +145,13 @@ const getActionCardClass = (action: 'ACCEPT' | 'REJECT' | 'DISPLACE') => {
             <input type="radio" :value="action" v-model="selectedAction" class="hidden" />
             <span class="text-base font-black uppercase">{{ action }}</span>
           </div>
-          <span class="text-xs font-sans mt-0.5 opacity-90">
+          <span class="text-xs font-sans mt-0.5 opacity-90 leading-tight">
             <template v-if="action === 'ACCEPT'"
               >Receiver has open slots and automatically accepts.</template
             >
             <template v-if="action === 'REJECT'"
-              >Receiver targets current slots and rejects lower priority elements.</template
+              >Receiver is full and rejects incoming element due to lower priority
+              ranking.</template
             >
             <template v-if="action === 'DISPLACE'"
               >Receiver is full but displaces an occupant based on preference dominance.</template
