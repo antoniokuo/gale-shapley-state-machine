@@ -33,37 +33,69 @@ export const useSessionStore = defineStore('session', {
   }),
 
   actions: {
+    // --------------------------------------------------
+    // SESSION PERSISTENCE (Step 2)
+    // --------------------------------------------------
+    restoreSession() {
+      // Intercept accidental page refreshes to prevent abandoned sequence tokens
+      const cachedUuid = sessionStorage.getItem('bipartite_uuid')
+      const cachedSequence = sessionStorage.getItem('bipartite_sequence') as SequenceGroup | null
+
+      if (cachedUuid && cachedSequence) {
+        this.uuid = cachedUuid
+        this.sequenceGroup = cachedSequence
+
+        // Remap conditions
+        if (this.sequenceGroup === 'AB') {
+          this.task1Type = 'STATIC'
+          this.task2Type = 'REACTIVE'
+        } else {
+          this.task1Type = 'REACTIVE'
+          this.task2Type = 'STATIC'
+        }
+
+        // Safely route refreshed users back to the orientation block
+        this.currentPhase = 'TRAINING'
+        console.info('Restored active session from cache to prevent sequence corruption.')
+      }
+    },
+
     async advanceTo(phase: SessionPhase) {
       const precedingPhase = this.currentPhase
-      this.currentPhase = phase
 
-      // Batch-dispatch accumulated telemetry at Phase boundaries to shield matching loops from I/O jitter
       if (
         (precedingPhase === 'TASK_1' || precedingPhase === 'TASK_2') &&
         this.telemetryBuffer.length > 0
       ) {
-        await this.flushTelemetryBuffer()
+        await this.flushTelemetryBuffer(precedingPhase)
       }
+
+      this.currentPhase = phase
     },
 
     async initializeSession() {
-      // 1. Generate clean UUIDv4 unlinked to persistent PII identifiers
       this.uuid = crypto.randomUUID()
 
-      try {
-        // 2. Query Supabase RPC for an stateful, balanced sequence assignment block
-        // const { data, error } = await supabase.rpc('get_balanced_sequence_assignment')
-        // if (error) throw error
-        // this.sequenceGroup = data.assigned_sequence as SequenceGroup
+      // Step 1: The Environment Gatekeeper
+      const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
 
-        // Fallback placeholder maintaining exact structural shape for local offline execution loops
-        this.sequenceGroup = 'AB'
-      } catch (e) {
-        console.warn('Database connection failed. Falling back to default block assignment.', e)
-        this.sequenceGroup = 'AB'
+      if (appMode === 'study') {
+        try {
+          // 2. Query Supabase RPC for a stateful, balanced sequence assignment block
+          // const { data, error } = await supabase.rpc('get_balanced_sequence_assignment')
+          // if (error) throw error
+          // this.sequenceGroup = data.assigned_sequence as SequenceGroup
+          this.sequenceGroup = 'AB' // Fallback
+        } catch (e) {
+          console.warn('Database connection failed. Falling back to default block assignment.', e)
+          this.sequenceGroup = 'AB'
+        }
+      } else {
+        // Portfolio Mode: Bypass DB, simulate random sequence assignment (50/50 split)
+        this.sequenceGroup = Math.random() > 0.5 ? 'AB' : 'BA'
+        console.info(`Portfolio Mode Active: Assigned random sequence ${this.sequenceGroup}`)
       }
 
-      // 3. Map experimental phase conditions explicitly based on the validated block sequence
       if (this.sequenceGroup === 'AB') {
         this.task1Type = 'STATIC'
         this.task2Type = 'REACTIVE'
@@ -72,7 +104,12 @@ export const useSessionStore = defineStore('session', {
         this.task2Type = 'STATIC'
       }
 
-      this.currentPhase = 'CONSENT'
+      // Lock tokens into browser session storage to survive F5/Refreshes
+      sessionStorage.setItem('bipartite_uuid', this.uuid)
+      sessionStorage.setItem('bipartite_sequence', this.sequenceGroup)
+
+      // ROUTING FIX: Push the user into the orientation phase AFTER generating the UUID
+      this.currentPhase = 'TRAINING'
     },
 
     logBreakpointTelemetry(
@@ -81,38 +118,41 @@ export const useSessionStore = defineStore('session', {
       rawDelta: number,
       isCorrect: boolean,
     ) {
-      // Apply strict client-side lower-bound floor constraint to protect downstream transformations
       const processedDelta = Math.max(1, Math.round(rawDelta))
-
-      // Evaluate if duration falls below human motor limits, flagging it as noise
       const isMotorNoise = processedDelta < 100
 
       this.telemetryBuffer.push({
         breakpointId,
         taskCondition: condition,
         latencyMs: processedDelta,
-        isCorrect: !isMotorNoise && isCorrect, // Automatically suppress precision accuracy data if motor noise
+        isCorrect: !isMotorNoise && isCorrect,
         isMotorNoise,
       })
     },
 
-    async flushTelemetryBuffer() {
+    async flushTelemetryBuffer(phaseContext: SessionPhase) {
       if (!this.uuid || this.telemetryBuffer.length === 0) return
 
-      try {
-        const payload = this.telemetryBuffer.map((record) => ({
-          session_uuid: this.uuid,
-          phase_context: this.currentPhase,
-          ...record,
-        }))
+      const payload = this.telemetryBuffer.map((record) => ({
+        session_uuid: this.uuid,
+        phase_context: phaseContext,
+        ...record,
+      }))
 
-        // const { error } = await supabase.from('telemetry_logs').insert(payload)
-        // if (error) throw error
+      const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
 
-        // Clear localized memory buffer following a verified transaction layer push
+      if (appMode === 'study') {
+        try {
+          // const { error } = await supabase.from('telemetry_logs').insert(payload)
+          // if (error) throw error
+          this.telemetryBuffer = []
+        } catch (e) {
+          console.error('Failed to commit network telemetry batch payload:', e)
+        }
+      } else {
+        // Portfolio Mode: Do not pollute database. Log payload to console to showcase pipeline.
+        console.table(payload)
         this.telemetryBuffer = []
-      } catch (e) {
-        console.error('Failed to commit network telemetry batch payload:', e)
       }
     },
 
@@ -123,6 +163,10 @@ export const useSessionStore = defineStore('session', {
       this.task2Type = null
       this.telemetryBuffer = []
       this.currentPhase = 'PIS'
+
+      // Purge cached tokens on explicit abort
+      sessionStorage.removeItem('bipartite_uuid')
+      sessionStorage.removeItem('bipartite_sequence')
     },
   },
 })
