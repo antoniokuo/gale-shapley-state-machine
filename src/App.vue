@@ -78,7 +78,7 @@ const handleTaskProgression = async () => {
   if (session.currentPhase === 'TASK_1') {
     await session.advanceTo('SURVEY_1')
   } else if (session.currentPhase === 'TASK_2') {
-    await session.advanceTo('SURVEY_2')
+    await session.advanceTo('SANDBOX') // Routes securely past Survey 2 to final Sandbox arm
   }
 }
 
@@ -160,9 +160,7 @@ const handleSurveySubmission = async (payload: {
       v-else-if="session.currentPhase === 'TASK_1' || session.currentPhase === 'TASK_2'"
       class="w-full flex flex-col items-center"
     >
-      <div
-        class="w-full max-w-7xl flex justify-between items-end border-b-4 border-neutral-900 pb-4 mb-6"
-      >
+      <div class="w-full max-w-7xl border-b-4 border-neutral-900 pb-4 mb-6">
         <div>
           <span
             class="text-xs font-bold uppercase tracking-widest text-neutral-900 bg-neutral-100 px-2 py-1 border-2 border-neutral-900"
@@ -174,17 +172,18 @@ const handleSurveySubmission = async (payload: {
             Asymmetric Bipartite Pipeline Ledger
           </h1>
         </div>
-
-        <button
-          v-if="store.isComplete"
-          @click="handleTaskProgression"
-          class="bg-neutral-950 text-white font-black text-sm uppercase py-3 px-6 border-4 border-neutral-950 hover:bg-neutral-800 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] animate-pulse"
-        >
-          Verify & Conclude Condition Sequence &rarr;
-        </button>
       </div>
 
       <MatchingGrid :isStatic="isCurrentTaskStatic" @submit-prediction="handleTelemetryPayload" />
+
+      <div v-if="store.isComplete" class="fixed bottom-10 right-10 z-50 animate-fade-in">
+        <button
+          @click="handleTaskProgression"
+          class="bg-blue-600 text-white text-xl font-black uppercase py-5 px-10 border-4 border-blue-950 hover:bg-blue-700 transition-all shadow-[8px_8px_0px_0px_rgba(30,58,138,1)] active:translate-x-1 active:translate-y-1 active:shadow-[4px_4px_0px_0px_rgba(30,58,138,1)]"
+        >
+          Execution Complete: Proceed to Survey &rarr;
+        </button>
+      </div>
     </div>
 
     <div
@@ -202,3 +201,19 @@ const handleSurveySubmission = async (payload: {
     <DebriefView v-else-if="session.currentPhase === 'DEBRIEF'" />
   </main>
 </template>
+
+<style scoped>
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+</style>
