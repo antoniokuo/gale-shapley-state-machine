@@ -63,11 +63,28 @@ const handleTelemetryPayload = (payload: {
     ? `${activeEvent.proposerId}-${activeEvent.receiverId}`
     : 'UNKNOWN'
 
+  // Extract the ground truth from the precomputed ledger (Tick + 1)
   const nextFrameIndex = store.tickIndex + 1
   const logicalNextStateFrame = store.stateLedger[nextFrameIndex]
-  const conceptualNextEvent = logicalNextStateFrame?.activeEvent.type
+  const expectedEvent = logicalNextStateFrame?.activeEvent
 
-  const isCorrect = payload.predictedAction === conceptualNextEvent
+  // 1. Evaluate Action Identity
+  const isActionCorrect = payload.predictedAction === expectedEvent?.type
+
+  // 2. Evaluate Target Identity Context
+  let isTargetCorrect = false
+  if (expectedEvent) {
+    if (expectedEvent.type === 'ACCEPT') {
+      isTargetCorrect = payload.predictedTarget === expectedEvent.receiverId
+    } else if (expectedEvent.type === 'REJECT') {
+      isTargetCorrect = payload.predictedTarget === expectedEvent.proposerId
+    } else if (expectedEvent.type === 'DISPLACE') {
+      isTargetCorrect = payload.predictedTarget === expectedEvent.displacedId
+    }
+  }
+
+  // Strict Conjunctive Validation (Both must be explicitly true)
+  const isCorrect = isActionCorrect && isTargetCorrect
 
   session.logBreakpointTelemetry(breakpointId, currentCondition, payload.latencyMs, isCorrect)
 

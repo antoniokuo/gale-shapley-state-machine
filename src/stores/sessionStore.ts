@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-// import { supabase } from '../supabaseClient' // Uncomment when client is instantiated
+import { supabase } from '../supabase'
 
 export type SessionPhase =
   | 'PIS'
@@ -20,7 +20,6 @@ export interface TelemetryRecord {
   taskCondition: 'STATIC' | 'REACTIVE'
   latencyMs: number
   isCorrect: boolean
-  isMotorNoise: boolean
 }
 
 export const useSessionStore = defineStore('session', {
@@ -35,10 +34,9 @@ export const useSessionStore = defineStore('session', {
 
   actions: {
     // --------------------------------------------------
-    // SESSION PERSISTENCE (Step 2)
+    // SESSION PERSISTENCE & FAULT TOLERANCE
     // --------------------------------------------------
     restoreSession() {
-      // Intercept accidental page refreshes to prevent abandoned sequence tokens
       const cachedUuid = sessionStorage.getItem('bipartite_uuid')
       const cachedSequence = sessionStorage.getItem('bipartite_sequence') as SequenceGroup | null
 
@@ -46,7 +44,6 @@ export const useSessionStore = defineStore('session', {
         this.uuid = cachedUuid
         this.sequenceGroup = cachedSequence
 
-        // Remap conditions
         if (this.sequenceGroup === 'AB') {
           this.task1Type = 'STATIC'
           this.task2Type = 'REACTIVE'
@@ -55,44 +52,32 @@ export const useSessionStore = defineStore('session', {
           this.task2Type = 'STATIC'
         }
 
-        // Safely route refreshed users back to the orientation block
         this.currentPhase = 'TRAINING'
         console.info('Restored active session from cache to prevent sequence corruption.')
+
+        // Asynchronously check and attempt to flush the client-side Dead-Letter Queue
+        this.flushDeadLetterQueue()
       }
-    },
-
-    async advanceTo(phase: SessionPhase) {
-      const precedingPhase = this.currentPhase
-
-      if (
-        (precedingPhase === 'TASK_1' || precedingPhase === 'TASK_2') &&
-        this.telemetryBuffer.length > 0
-      ) {
-        await this.flushTelemetryBuffer(precedingPhase)
-      }
-
-      this.currentPhase = phase
     },
 
     async initializeSession() {
       this.uuid = crypto.randomUUID()
-
-      // Step 1: The Environment Gatekeeper
       const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
 
       if (appMode === 'study') {
         try {
-          // 2. Query Supabase RPC for a stateful, balanced sequence assignment block
-          // const { data, error } = await supabase.rpc('get_balanced_sequence_assignment')
-          // if (error) throw error
-          // this.sequenceGroup = data.assigned_sequence as SequenceGroup
-          this.sequenceGroup = 'AB' // Fallback
+          // Stateful crossover block allocation request executed via cloud database RPC layer
+          const { data, error } = await supabase.rpc('get_balanced_sequence_assignment')
+          if (error) throw error
+          this.sequenceGroup = data as SequenceGroup
         } catch (e) {
-          console.warn('Database connection failed. Falling back to default block assignment.', e)
-          this.sequenceGroup = 'AB'
+          console.warn(
+            'Database allocation failed. Invoking client fallback sequence balancing.',
+            e,
+          )
+          this.sequenceGroup = Math.random() > 0.5 ? 'AB' : 'BA'
         }
       } else {
-        // Portfolio Mode: Bypass DB, simulate random sequence assignment (50/50 split)
         this.sequenceGroup = Math.random() > 0.5 ? 'AB' : 'BA'
         console.info(`Portfolio Mode Active: Assigned random sequence ${this.sequenceGroup}`)
       }
@@ -105,55 +90,117 @@ export const useSessionStore = defineStore('session', {
         this.task2Type = 'STATIC'
       }
 
-      // Lock tokens into browser session storage to survive F5/Refreshes
       sessionStorage.setItem('bipartite_uuid', this.uuid)
       sessionStorage.setItem('bipartite_sequence', this.sequenceGroup)
-
-      // ROUTING FIX: Push the user into the orientation phase AFTER generating the UUID
       this.currentPhase = 'TRAINING'
     },
 
+    async advanceTo(phase: SessionPhase) {
+      const precedingPhase = this.currentPhase
+
+      if (
+        (precedingPhase === 'TASK_1' || precedingPhase === 'TASK_2') &&
+        this.telemetryBuffer.length > 0
+      ) {
+        await this.flushTelemetryBuffer()
+      }
+
+      this.currentPhase = phase
+    },
+
+    // --------------------------------------------------
+    // TELEMETRY INGESTION & MATHEMATICAL SANITISATION
+    // --------------------------------------------------
     logBreakpointTelemetry(
       breakpointId: string,
       condition: 'STATIC' | 'REACTIVE',
       rawDelta: number,
       isCorrect: boolean,
     ) {
+      // SOP Section 5.2 Floor Constraint Enforcement
       const processedDelta = Math.max(1, Math.round(rawDelta))
-      const isMotorNoise = processedDelta < 100
+
+      // Strict lower-bound human motor-response filter (150ms boundary)
+      if (processedDelta < 150) {
+        console.warn(
+          `Outlier Truncation: Breakpoint ${breakpointId} dropped as hardware double-click noise (${processedDelta}ms).`,
+        )
+        return // Dropped cleanly from payload stream to protect data model integrity
+      }
 
       this.telemetryBuffer.push({
         breakpointId,
         taskCondition: condition,
         latencyMs: processedDelta,
-        isCorrect: !isMotorNoise && isCorrect,
-        isMotorNoise,
+        isCorrect,
       })
     },
 
-    async flushTelemetryBuffer(phaseContext: SessionPhase) {
+    async flushTelemetryBuffer() {
       if (!this.uuid || this.telemetryBuffer.length === 0) return
 
       const payload = this.telemetryBuffer.map((record) => ({
         session_uuid: this.uuid,
-        phase_context: phaseContext,
-        ...record,
+        breakpoint_id: record.breakpointId,
+        condition_type: record.taskCondition,
+        latency_ms: record.latencyMs,
+        is_correct: record.isCorrect,
       }))
 
       const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
 
       if (appMode === 'study') {
         try {
-          // const { error } = await supabase.from('telemetry_logs').insert(payload)
-          // if (error) throw error
+          const { error } = await supabase.from('session_telemetry').insert(payload)
+          if (error) throw error
           this.telemetryBuffer = []
         } catch (e) {
-          console.error('Failed to commit network telemetry batch payload:', e)
+          console.error(
+            'Network drop detected. Serialising batch logs to client-side Dead-Letter Queue:',
+            e,
+          )
+          this.preserveToDeadLetterQueue('telemetry_dlq', payload)
+          this.telemetryBuffer = [] // Clear memory buffer to prevent infinite loops
         }
       } else {
-        // Portfolio Mode: Do not pollute database. Log payload to console to showcase pipeline.
+        console.info('Portfolio Simulation Mode: Telemetry Ledger Payload')
         console.table(payload)
         this.telemetryBuffer = []
+      }
+    },
+
+    // --------------------------------------------------
+    // DISTRIBUTED FAULT-TOLERANCE HOOKS (Industry Showcase)
+    // --------------------------------------------------
+    preserveToDeadLetterQueue(storageKey: string, freshPayload: any[]) {
+      try {
+        const existingDataString = localStorage.getItem(storageKey)
+        const existingData = existingDataString ? JSON.parse(existingDataString) : []
+        const combinedPayload = [...existingData, ...freshPayload]
+        localStorage.setItem(storageKey, JSON.stringify(combinedPayload))
+      } catch (err) {
+        console.error('Catastrophic failure writing to client local storage buffer:', err)
+      }
+    },
+
+    async flushDeadLetterQueue() {
+      const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
+      if (appMode !== 'study') return
+
+      const cachedTelemetry = localStorage.getItem('telemetry_dlq')
+      if (cachedTelemetry) {
+        try {
+          const parsedPayload = JSON.parse(cachedTelemetry)
+          const { error } = await supabase.from('session_telemetry').insert(parsedPayload)
+          if (!error) {
+            localStorage.removeItem('telemetry_dlq')
+            console.info(
+              'Successfully recovered and flushed cached telemetry queue logs to cloud storage.',
+            )
+          }
+        } catch (e) {
+          console.warn('Network transmission retry failed. Retaining queue cache.', e)
+        }
       }
     },
 
@@ -165,7 +212,6 @@ export const useSessionStore = defineStore('session', {
       this.telemetryBuffer = []
       this.currentPhase = 'PIS'
 
-      // Purge cached tokens on explicit abort
       sessionStorage.removeItem('bipartite_uuid')
       sessionStorage.removeItem('bipartite_sequence')
     },
