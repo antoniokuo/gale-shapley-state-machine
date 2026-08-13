@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useMatchingStore } from '../stores/matchingStore'
 import { useSessionStore } from '../stores/sessionStore'
+import { supabase } from '../supabase'
 import MatchingGrid from './MatchingGrid.vue'
 
 const store = useMatchingStore()
@@ -85,14 +86,24 @@ onUnmounted(() => {
 
 const concludeSession = async () => {
   if (session.uuid && !isFeedbackEmpty.value) {
-    try {
-      const payload = {
-        session_uuid: session.uuid,
-        qualitative_feedback: qualitativeFeedback.value.trim(),
+    const payload = {
+      session_uuid: session.uuid,
+      feedback_text: qualitativeFeedback.value.trim(),
+    }
+
+    const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
+
+    if (appMode === 'study') {
+      try {
+        const { error } = await supabase.from('qualitative_feedback').insert(payload)
+        if (error) throw error
+      } catch (e) {
+        console.error('Feedback network drop. Serialising to Dead-Letter Queue:', e)
+        session.preserveToDeadLetterQueue('feedback_dlq', [payload])
       }
-      console.table(payload) // Telemetry Hook: Ready for Supabase injection
-    } catch (e) {
-      console.error('Failed to log qualitative feedback:', e)
+    } else {
+      console.info('Portfolio Simulation Mode: Qualitative Feedback Payload')
+      console.table(payload)
     }
   }
 

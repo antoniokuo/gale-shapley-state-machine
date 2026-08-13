@@ -38,25 +38,18 @@ export const useSessionStore = defineStore('session', {
     // --------------------------------------------------
     restoreSession() {
       const cachedUuid = sessionStorage.getItem('bipartite_uuid')
-      const cachedSequence = sessionStorage.getItem('bipartite_sequence') as SequenceGroup | null
 
-      if (cachedUuid && cachedSequence) {
-        this.uuid = cachedUuid
-        this.sequenceGroup = cachedSequence
+      // 1. Decoupled Recovery: Always attempt to flush orphaned network payloads
+      // from previous sessions regardless of current state validity.
+      this.flushDeadLetterQueue()
 
-        if (this.sequenceGroup === 'AB') {
-          this.task1Type = 'STATIC'
-          this.task2Type = 'REACTIVE'
-        } else {
-          this.task1Type = 'REACTIVE'
-          this.task2Type = 'STATIC'
-        }
-
-        this.currentPhase = 'TRAINING'
-        console.info('Restored active session from cache to prevent sequence corruption.')
-
-        // Asynchronously check and attempt to flush the client-side Dead-Letter Queue
-        this.flushDeadLetterQueue()
+      if (cachedUuid) {
+        // 2. Strict Invalidation: A fresh boot with an existing token proves
+        // the runtime was intentionally refreshed mid-experiment.
+        console.warn(
+          'Fatal state disruption: Browser reload detected. Invalidating token to enforce strict crossover methodology.',
+        )
+        this.abortSession()
       }
     },
 
@@ -66,7 +59,6 @@ export const useSessionStore = defineStore('session', {
 
       if (appMode === 'study') {
         try {
-          // Stateful crossover block allocation request executed via cloud database RPC layer
           const { data, error } = await supabase.rpc('get_balanced_sequence_assignment')
           if (error) throw error
           this.sequenceGroup = data as SequenceGroup
@@ -117,15 +109,13 @@ export const useSessionStore = defineStore('session', {
       rawDelta: number,
       isCorrect: boolean,
     ) {
-      // SOP Section 5.2 Floor Constraint Enforcement
       const processedDelta = Math.max(1, Math.round(rawDelta))
 
-      // Strict lower-bound human motor-response filter (150ms boundary)
       if (processedDelta < 150) {
         console.warn(
           `Outlier Truncation: Breakpoint ${breakpointId} dropped as hardware double-click noise (${processedDelta}ms).`,
         )
-        return // Dropped cleanly from payload stream to protect data model integrity
+        return
       }
 
       this.telemetryBuffer.push({
@@ -160,7 +150,7 @@ export const useSessionStore = defineStore('session', {
             e,
           )
           this.preserveToDeadLetterQueue('telemetry_dlq', payload)
-          this.telemetryBuffer = [] // Clear memory buffer to prevent infinite loops
+          this.telemetryBuffer = []
         }
       } else {
         console.info('Portfolio Simulation Mode: Telemetry Ledger Payload')

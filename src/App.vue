@@ -2,6 +2,7 @@
 import { watch, computed, onMounted } from 'vue'
 import { useSessionStore } from './stores/sessionStore'
 import { useMatchingStore } from './stores/matchingStore'
+import { supabase } from './supabase'
 
 import PISView from './components/PISView.vue'
 import ConsentGateway from './components/ConsentGateway.vue'
@@ -118,18 +119,33 @@ const handleSurveySubmission = async (payload: {
 
   if (!session.uuid || !completedCondition) return
 
-  try {
-    const formattedPayload = {
-      session_uuid: session.uuid,
-      condition_type: completedCondition,
-      phase_context: session.currentPhase,
-      ...payload.nasaTlx,
-      ...Object.fromEntries(Object.entries(payload.sus).map(([k, v]) => [`sus_item_${k}`, v])),
-    }
+  // Strict mapping to PostgreSQL snake_case schema to guarantee insertion validity
+  const formattedPayload = {
+    session_uuid: session.uuid,
+    condition_type: completedCondition,
+    phase_context: session.currentPhase,
+    mental_demand: payload.nasaTlx.mentalDemand,
+    physical_demand: payload.nasaTlx.physicalDemand,
+    temporal_demand: payload.nasaTlx.temporalDemand,
+    performance: payload.nasaTlx.performance,
+    effort: payload.nasaTlx.effort,
+    frustration: payload.nasaTlx.frustration,
+    ...Object.fromEntries(Object.entries(payload.sus).map(([k, v]) => [`sus_item_${k}`, v])),
+  }
 
+  const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
+
+  if (appMode === 'study') {
+    try {
+      const { error } = await supabase.from('psychometric_surveys').insert(formattedPayload)
+      if (error) throw error
+    } catch (e) {
+      console.error('Survey network drop. Serialising to Dead-Letter Queue:', e)
+      session.preserveToDeadLetterQueue('survey_dlq', [formattedPayload])
+    }
+  } else {
+    console.info('Portfolio Simulation Mode: Survey Payload')
     console.table(formattedPayload)
-  } catch (e) {
-    console.error('Failed to dispatch snapshot survey values:', e)
   }
 
   if (session.currentPhase === 'SURVEY_1') {
