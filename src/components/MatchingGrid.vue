@@ -10,7 +10,6 @@ const props = defineProps<{
 
 const store = useMatchingStore()
 
-// Bubble telemetry prediction hooks to App.vue orchestrator
 defineEmits<{
   (e: 'submit-prediction', payload: any): void
 }>()
@@ -21,12 +20,10 @@ defineEmits<{
 const currentState = computed(() => store.currentState)
 const activeDataset = computed(() => store.activeDataset)
 
-// Environment Gatekeeper: Expose Dev Speed panel strictly to hiring managers
 const isPortfolioMode = computed(
   () => (import.meta.env.VITE_APP_MODE || 'portfolio') === 'portfolio',
 )
 
-// Spotlight mask isolates visual fields to capture cognitive processing latency (SOP 1.3)
 const isSpotlightActive = computed(() => !props.isStatic && store.isAwaitingUserInput)
 
 const isMuted = (nodeId: string) => {
@@ -35,13 +32,14 @@ const isMuted = (nodeId: string) => {
 }
 
 // --------------------------------------------------
-// DYNAMIC ELEMENT STATE FORMATTERS
+// DYNAMIC ELEMENT STATE FORMATTERS (STRICT FIDELITY)
 // --------------------------------------------------
 const getProposerVisuals = (proposerId: string) => {
   const pState = currentState.value?.proposers[proposerId]
   const isActive = store.activeProposerId === proposerId
+  const activeEvent = currentState.value?.activeEvent
 
-  // CONTROL CONDITION: Strict monochrome polarity (ADR 0012)
+  // CONTROL CONDITION: Strict monochrome polarity
   if (props.isStatic) {
     if (isActive && store.isAwaitingUserInput) {
       return 'bg-neutral-50 border-neutral-900 text-neutral-950 ring-2 ring-neutral-950 scale-105 z-10'
@@ -52,12 +50,36 @@ const getProposerVisuals = (proposerId: string) => {
   }
 
   // EXPERIMENTAL CONDITION: Interactive Semantic Colour Architecture
-  if (isActive) {
+
+  // 1. Proposing State (Awaiting Input)
+  if (isActive && store.isAwaitingUserInput) {
     return 'bg-blue-600 text-white border-blue-950 shadow-[4px_4px_0px_0px_rgba(30,58,138,1)] scale-105 z-10'
   }
+
+  // 2. Active Event Resolution (The Execution Tick)
+  if (activeEvent && !store.isAwaitingUserInput) {
+    // Direct Rejection
+    if (activeEvent.type === 'REJECT' && activeEvent.proposerId === proposerId) {
+      return 'bg-red-600 text-white border-red-950 shadow-[4px_4px_0px_0px_rgba(127,29,29,1)] scale-105 z-10'
+    }
+    // Displacement Victim (Flashes Amber in the status board)
+    if (activeEvent.type === 'DISPLACE' && activeEvent.displacedId === proposerId) {
+      return 'bg-amber-400 text-black border-amber-950 shadow-[4px_4px_0px_0px_rgba(146,64,14,1)] scale-105 z-10'
+    }
+    // Acceptance / Successful Displacement Applicant
+    if (
+      (activeEvent.type === 'ACCEPT' || activeEvent.type === 'DISPLACE') &&
+      activeEvent.proposerId === proposerId
+    ) {
+      return 'bg-emerald-400 text-black border-emerald-950 shadow-[4px_4px_0px_0px_rgba(6,78,59,1)] scale-105 z-10'
+    }
+  }
+
+  // 3. Persistent Deferred Security State (Held)
   if (pState?.match) {
     return 'bg-emerald-400 text-black border-emerald-950 shadow-[4px_4px_0px_0px_rgba(6,78,59,1)]'
   }
+
   return 'bg-white text-black border-neutral-950 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
 }
 
@@ -65,13 +87,58 @@ const getReceiverVisuals = (receiverId: string) => {
   if (props.isStatic) {
     return 'border-neutral-900 bg-white text-neutral-950'
   }
+
+  const activeEvent = currentState.value?.activeEvent
+
+  // Dynamic Receiver Flash (Amplified contrast)
+  if (activeEvent && activeEvent.receiverId === receiverId && !store.isAwaitingUserInput) {
+    if (activeEvent.type === 'ACCEPT')
+      return 'border-emerald-950 bg-emerald-100 shadow-[4px_4px_0px_0px_rgba(6,78,59,1)]'
+    if (activeEvent.type === 'REJECT')
+      return 'border-red-950 bg-red-100 shadow-[4px_4px_0px_0px_rgba(127,29,29,1)]'
+    if (activeEvent.type === 'DISPLACE')
+      return 'border-amber-950 bg-amber-200 shadow-[4px_4px_0px_0px_rgba(146,64,14,1)]'
+  }
+
   return isMuted(receiverId)
     ? 'border-neutral-900 bg-neutral-100 opacity-25 grayscale blur-[1px] shadow-none'
     : 'border-neutral-900 bg-neutral-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]'
 }
 
-const getOccupantVisuals = () => {
+// Visual Interceptor: Ghosts the victim back into the DOM during the resolution tick
+const getVisualOccupants = (receiverId: string) => {
+  const rState = currentState.value?.receivers[receiverId]
+  if (!rState) return []
+  const activeEvent = currentState.value?.activeEvent
+
+  if (
+    activeEvent &&
+    activeEvent.type === 'DISPLACE' &&
+    activeEvent.receiverId === receiverId &&
+    !store.isAwaitingUserInput
+  ) {
+    return rState.matches.map((id) =>
+      id === activeEvent.proposerId ? (activeEvent.displacedId as string) : id,
+    )
+  }
+  return rState.matches
+}
+
+const getOccupantVisuals = (occupantId: string) => {
   if (props.isStatic) return 'bg-neutral-200 text-neutral-950 border-neutral-900'
+
+  const activeEvent = currentState.value?.activeEvent
+
+  // High-fidelity Amber flash for the evicted occupant
+  if (
+    activeEvent &&
+    activeEvent.type === 'DISPLACE' &&
+    activeEvent.displacedId === occupantId &&
+    !store.isAwaitingUserInput
+  ) {
+    return 'bg-amber-400 text-black border-amber-950 shadow-[2px_2px_0px_0px_rgba(146,64,14,1)] scale-110 z-10'
+  }
+
   return 'bg-emerald-400 text-black border-emerald-950'
 }
 </script>
@@ -153,17 +220,17 @@ const getOccupantVisuals = () => {
 
           <div class="flex flex-wrap gap-2 mt-4">
             <div
-              v-for="occupantId in rState.matches"
+              v-for="occupantId in getVisualOccupants(receiverId as string)"
               :key="occupantId"
               :class="[
                 'px-3 py-1.5 border-4 text-sm font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all duration-300',
-                getOccupantVisuals(),
+                getOccupantVisuals(occupantId as string),
               ]"
             >
               {{ occupantId }}
             </div>
             <div
-              v-if="rState.matches.length === 0"
+              v-if="currentState?.receivers[receiverId as string]?.matches.length === 0"
               class="text-neutral-500 font-bold text-sm italic py-1"
             >
               Empty Slot
@@ -304,7 +371,6 @@ const getOccupantVisuals = () => {
   animation: fadeIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
-/* Minimalist styling to keep custom track clear and readable */
 .scrollbar-thin::-webkit-scrollbar {
   height: 6px;
 }

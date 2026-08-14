@@ -1,4 +1,3 @@
-// src/stores/matchingStore.ts
 import { defineStore } from 'pinia'
 import { createGaleShapleyEngine } from '../engine/galeShapleyEngine'
 import type {
@@ -16,10 +15,13 @@ export const useMatchingStore = defineStore('matching', {
     tickIndex: 0,
     isAwaitingUserInput: false,
 
-    // Automation & Speed Showcase States (Hiring Manager Features)
+    // Automation & Speed Showcase States
     tickRate: 800,
     timerId: null as number | null,
     isPlaying: false,
+
+    // Forces a hard visual pause on resolution events
+    isResolutionPauseActive: false,
 
     // Spatial Anchors preventing layout recognition (ADR 0011)
     spatialProposerOrder: [] as string[],
@@ -44,10 +46,6 @@ export const useMatchingStore = defineStore('matching', {
   },
 
   actions: {
-    /**
-     * Compiles the full deterministic execution path into deep-cloned immutable states
-     * to enable instant bidirectional time-travel with zero visual layout shifts.
-     */
     async hydrateAndPrecompute(payload: DatasetPayload) {
       this.clearPlaybackTimer()
       this.activeDataset = payload
@@ -55,15 +53,14 @@ export const useMatchingStore = defineStore('matching', {
       this.tickIndex = 0
       this.isAwaitingUserInput = false
       this.isPlaying = false
+      this.isResolutionPauseActive = false
       this.activeProposerId = null
       this.activeTargetReceiverId = null
 
-      // Enforce random visual spatial geometry on initialization to mitigate layout memorization (ADR 0011)
       this.spatialProposerOrder = Object.keys(payload.proposerPreferences).sort(
         () => Math.random() - 0.5,
       )
 
-      // Instantiate initial baseline tracking frames
       const proposers: Record<string, ProposerState> = {}
       Object.keys(payload.proposerPreferences).forEach((p) => {
         proposers[p] = {
@@ -85,11 +82,9 @@ export const useMatchingStore = defineStore('matching', {
       })
 
       const freeProposers = Object.keys(payload.proposerPreferences)
-
       const engine = createGaleShapleyEngine(payload)
       let currentTick = 0
 
-      // Exhaust the generator in the background to log all state mutations deterministically
       for await (const event of engine) {
         this.mutateFrame(proposers, receivers, freeProposers, event)
 
@@ -103,7 +98,6 @@ export const useMatchingStore = defineStore('matching', {
         })
       }
 
-      // Automatically kick off the execution loops upon completed hydration
       this.startPlaybackLoop()
     },
 
@@ -151,22 +145,24 @@ export const useMatchingStore = defineStore('matching', {
       }
     },
 
-    // --------------------------------------------------
-    // AUTOMATED PLAYBACK RUNNERS (Hiring Manager Architecture)
-    // --------------------------------------------------
     startPlaybackLoop() {
-      if (this.isAwaitingUserInput || this.isComplete) return
+      if (this.isAwaitingUserInput || this.isComplete || this.isResolutionPauseActive) return
       this.isPlaying = true
       this.clearPlaybackTimer()
 
       const runTick = () => {
-        if (this.tickIndex < this.stateLedger.length - 1 && !this.isAwaitingUserInput) {
+        if (
+          this.tickIndex < this.stateLedger.length - 1 &&
+          !this.isAwaitingUserInput &&
+          !this.isResolutionPauseActive
+        ) {
           this.tickIndex++
           this.evaluateCurrentTickEvent()
 
-          if (!this.isAwaitingUserInput && !this.isComplete) {
+          // If the tick we just hit is NOT a breakpoint, keep the loop running
+          if (!this.isAwaitingUserInput && !this.isResolutionPauseActive && !this.isComplete) {
             this.timerId = window.setTimeout(runTick, this.tickRate)
-          } else {
+          } else if (this.isComplete) {
             this.isPlaying = false
           }
         } else {
@@ -189,9 +185,6 @@ export const useMatchingStore = defineStore('matching', {
       }
     },
 
-    // --------------------------------------------------
-    // BI-DIRECTIONAL MANUAL LEDGER CONTROLS
-    // --------------------------------------------------
     stepForward() {
       this.pausePlayback()
       if (this.tickIndex < this.stateLedger.length - 1 && !this.isAwaitingUserInput) {
@@ -205,6 +198,7 @@ export const useMatchingStore = defineStore('matching', {
       if (this.tickIndex > 0) {
         this.tickIndex--
         this.isAwaitingUserInput = false
+        this.isResolutionPauseActive = false
         this.activeProposerId = null
         this.activeTargetReceiverId = null
       }
@@ -224,12 +218,22 @@ export const useMatchingStore = defineStore('matching', {
 
     resumeFromBreakpoint() {
       this.isAwaitingUserInput = false
-      this.activeProposerId = null
-      this.activeTargetReceiverId = null
+      // Do not clear the pointers yet; the visual formatters need them for the resolution frame.
 
       if (this.tickIndex < this.stateLedger.length - 1) {
-        this.tickIndex++
-        this.startPlaybackLoop() // Automatically resumes loop execution smoothly
+        this.tickIndex++ // Move exactly one tick forward to the resolution event (ACCEPT/REJECT/DISPLACE)
+
+        // Force a hard pause so the participant actually sees the visual consequences
+        this.isResolutionPauseActive = true
+        this.clearPlaybackTimer()
+
+        // Wait 1500ms to guarantee visual processing, then automatically resume the loop
+        window.setTimeout(() => {
+          this.isResolutionPauseActive = false
+          this.activeProposerId = null
+          this.activeTargetReceiverId = null
+          this.startPlaybackLoop()
+        }, 1500)
       }
     },
   },
