@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, computed, onMounted } from 'vue'
+import { watch, computed, onMounted, ref } from 'vue'
 import { useSessionStore } from './stores/sessionStore'
 import { useMatchingStore } from './stores/matchingStore'
 import { supabase } from './supabase'
@@ -92,11 +92,21 @@ const handleTelemetryPayload = (payload: {
   store.resumeFromBreakpoint()
 }
 
+// ASYNCHRONOUS UI LOCK (Prevents duplicate network requests)
+const isTransitioning = ref(false)
+
 const handleTaskProgression = async () => {
-  if (session.currentPhase === 'TASK_1') {
-    await session.advanceTo('SURVEY_1')
-  } else if (session.currentPhase === 'TASK_2') {
-    await session.advanceTo('SURVEY_2')
+  if (isTransitioning.value) return
+  isTransitioning.value = true
+
+  try {
+    if (session.currentPhase === 'TASK_1') {
+      await session.advanceTo('SURVEY_1')
+    } else if (session.currentPhase === 'TASK_2') {
+      await session.advanceTo('SURVEY_2')
+    }
+  } finally {
+    isTransitioning.value = false
   }
 }
 
@@ -212,9 +222,20 @@ const handleSurveySubmission = async (payload: {
       <div v-if="store.isComplete" class="fixed bottom-10 right-10 z-50 animate-fade-in">
         <button
           @click="handleTaskProgression"
-          class="bg-blue-600 text-white text-xl font-black uppercase py-5 px-10 border-4 border-blue-950 hover:bg-blue-700 transition-all shadow-[8px_8px_0px_0px_rgba(30,58,138,1)] active:translate-x-1 active:translate-y-1 active:shadow-[4px_4px_0px_0px_rgba(30,58,138,1)]"
+          :disabled="isTransitioning"
+          class="bg-blue-600 text-white text-xl font-black uppercase py-5 px-10 border-4 border-blue-950 transition-all"
+          :class="{
+            'opacity-50 cursor-not-allowed shadow-[4px_4px_0px_0px_rgba(30,58,138,1)] translate-x-1 translate-y-1':
+              isTransitioning,
+            'hover:bg-blue-700 active:translate-x-1 active:translate-y-1 active:shadow-[4px_4px_0px_0px_rgba(30,58,138,1)] shadow-[8px_8px_0px_0px_rgba(30,58,138,1)]':
+              !isTransitioning,
+          }"
         >
-          Execution Complete: Proceed to Survey &rarr;
+          {{
+            isTransitioning
+              ? 'Transmitting Data...'
+              : 'Execution Complete: Proceed to Survey &rarr;'
+          }}
         </button>
       </div>
     </div>
