@@ -118,6 +118,15 @@ export const useSessionStore = defineStore('session', {
         return
       }
 
+      // STRICT IDEMPOTENCY LOCK: Prevents unique_violation database rejections
+      const isDuplicate = this.telemetryBuffer.some((r) => r.breakpointId === breakpointId)
+      if (isDuplicate) {
+        console.warn(
+          `Idempotency lock triggered: Dropping phantom double-click for ${breakpointId}.`,
+        )
+        return
+      }
+
       this.telemetryBuffer.push({
         breakpointId,
         taskCondition: condition,
@@ -145,10 +154,7 @@ export const useSessionStore = defineStore('session', {
           if (error) throw error
           this.telemetryBuffer = []
         } catch (e) {
-          console.error(
-            'Network drop detected. Serialising batch logs to client-side Dead-Letter Queue:',
-            e,
-          )
+          console.error('FATAL DATABASE REJECTION: Serialising batch logs to Dead-Letter Queue.', e)
           this.preserveToDeadLetterQueue('telemetry_dlq', payload)
           this.telemetryBuffer = []
         }
