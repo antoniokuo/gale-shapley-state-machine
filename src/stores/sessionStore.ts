@@ -153,8 +153,13 @@ export const useSessionStore = defineStore('session', {
           const { error } = await supabase.from('session_telemetry').insert(payload)
           if (error) throw error
           this.telemetryBuffer = []
-        } catch (e) {
-          console.error('FATAL DATABASE REJECTION: Serialising batch logs to Dead-Letter Queue.', e)
+        } catch (e: any) {
+          // THIS IS NON-NEGOTIABLE. DO NOT REMOVE THIS ALERT.
+          const errorMsg = e?.message || e?.details || JSON.stringify(e)
+          alert(
+            `CRITICAL DATA LOSS DETECTED!\n\nReason: ${errorMsg}\n\nDO NOT CLOSE THIS BROWSER WINDOW. Call the researcher to extract the Dead-Letter Queue immediately.`,
+          )
+          console.error('FATAL DATABASE REJECTION:', e)
           this.preserveToDeadLetterQueue('telemetry_dlq', payload)
           this.telemetryBuffer = []
         }
