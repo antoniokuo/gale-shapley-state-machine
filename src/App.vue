@@ -92,7 +92,7 @@ const handleTelemetryPayload = (payload: {
   store.resumeFromBreakpoint()
 }
 
-// ASYNCHRONOUS UI LOCK (Prevents duplicate network requests)
+// ASYNCHRONOUS UI LOCK (Prevents duplicate network requests for Task telemetry)
 const isTransitioning = ref(false)
 
 const handleTaskProgression = async () => {
@@ -120,48 +120,58 @@ const activeConditionLabel = computed(() => {
   return session.task2Type === 'STATIC' ? 'Static View' : 'Interactive DAG View'
 })
 
+// ASYNCHRONOUS UI LOCK (Prevents duplicate network requests for Survey payloads)
+const isSurveyTransitioning = ref(false)
+
 const handleSurveySubmission = async (payload: {
   nasaTlx: Record<string, number>
   sus: Record<number, number>
 }) => {
-  const completedCondition =
-    session.currentPhase === 'SURVEY_1' ? session.task1Type : session.task2Type
+  if (isSurveyTransitioning.value) return
+  isSurveyTransitioning.value = true
 
-  if (!session.uuid || !completedCondition) return
+  try {
+    const completedCondition =
+      session.currentPhase === 'SURVEY_1' ? session.task1Type : session.task2Type
 
-  // Strict mapping to PostgreSQL snake_case schema to guarantee insertion validity
-  const formattedPayload = {
-    session_uuid: session.uuid,
-    condition_type: completedCondition,
-    phase_context: session.currentPhase,
-    mental_demand: payload.nasaTlx.mentalDemand,
-    physical_demand: payload.nasaTlx.physicalDemand,
-    temporal_demand: payload.nasaTlx.temporalDemand,
-    performance: payload.nasaTlx.performance,
-    effort: payload.nasaTlx.effort,
-    frustration: payload.nasaTlx.frustration,
-    ...Object.fromEntries(Object.entries(payload.sus).map(([k, v]) => [`sus_item_${k}`, v])),
-  }
+    if (!session.uuid || !completedCondition) return
 
-  const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
-
-  if (appMode === 'study') {
-    try {
-      const { error } = await supabase.from('psychometric_surveys').insert(formattedPayload)
-      if (error) throw error
-    } catch (e) {
-      console.error('Survey network drop. Serialising to Dead-Letter Queue:', e)
-      session.preserveToDeadLetterQueue('survey_dlq', [formattedPayload])
+    // Strict mapping to PostgreSQL snake_case schema to guarantee insertion validity
+    const formattedPayload = {
+      session_uuid: session.uuid,
+      condition_type: completedCondition,
+      phase_context: session.currentPhase,
+      mental_demand: payload.nasaTlx.mentalDemand,
+      physical_demand: payload.nasaTlx.physicalDemand,
+      temporal_demand: payload.nasaTlx.temporalDemand,
+      performance: payload.nasaTlx.performance,
+      effort: payload.nasaTlx.effort,
+      frustration: payload.nasaTlx.frustration,
+      ...Object.fromEntries(Object.entries(payload.sus).map(([k, v]) => [`sus_item_${k}`, v])),
     }
-  } else {
-    console.info('Portfolio Simulation Mode: Survey Payload')
-    console.table(formattedPayload)
-  }
 
-  if (session.currentPhase === 'SURVEY_1') {
-    await session.advanceTo('TRAINING_2')
-  } else {
-    await session.advanceTo('SANDBOX')
+    const appMode = import.meta.env.VITE_APP_MODE || 'portfolio'
+
+    if (appMode === 'study') {
+      try {
+        const { error } = await supabase.from('psychometric_surveys').insert(formattedPayload)
+        if (error) throw error
+      } catch (e) {
+        console.error('Survey network drop. Serialising to Dead-Letter Queue:', e)
+        session.preserveToDeadLetterQueue('survey_dlq', [formattedPayload])
+      }
+    } else {
+      console.info('Portfolio Simulation Mode: Survey Payload')
+      console.table(formattedPayload)
+    }
+
+    if (session.currentPhase === 'SURVEY_1') {
+      await session.advanceTo('TRAINING_2')
+    } else {
+      await session.advanceTo('SANDBOX')
+    }
+  } finally {
+    isSurveyTransitioning.value = false
   }
 }
 </script>
