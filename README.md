@@ -1,54 +1,62 @@
 # Gale-Shapley State Machine
 
-Deterministic DAG-reactive state machine for bipartite market matching (Hospital-Residents). Engineered with Vue 3, Pinia, and TypeScript to enforce O(1) lookup times and <200ms HCI latency during cascading algorithmic rejections.
+![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript)
+![Pinia](https://img.shields.io/badge/Pinia-4.0-FFE066?style=flat-square&logo=vue.js)
+![Vitest](https://img.shields.io/badge/Vitest-4.1-729B1B?style=flat-square&logo=vitest)
 
-## Recommended IDE Setup
+A deterministic, DAG-reactive state machine engineered to visualise and execute bipartite market matching (Hospital-Residents / Gale-Shapley algorithm). Built to enforce O(1) memory lookups, strict state isolation, and offline-first fault tolerance for empirical telemetry collection.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+https://github.com/user-attachments/assets/e60a2a74-32c8-4617-a086-e2b5f77f05dc
 
-## Recommended Browser Setup
+## Operational Context & Institutional Compliance
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Developed as an MSc Computer Science dissertation project at the University of Bath, this architecture was engineered under strict institutional research constraints to serve as the primary telemetry engine for a live Human-Computer Interaction (HCI) study.
 
-## Type Support for `.vue` Imports in TS
+- **Data Governance (UK GDPR):** Enforces strict participant anonymity via randomised UUID generation and Supabase Row Level Security (RLS) policies to comply with university ethics protocols.
+- **Cryptographic Consent Routing:** The Vue application implements a strict initialization gateway. Access to the core state machine is physically blocked by router guards until explicit user consent is registered via the Participant Information Sheet (PIS).
+- **Empirical Telemetry Isolation:** Utilises high-resolution web APIs to isolate human cognitive processing latency from frontend reactive rendering cycles, capturing sub-second execution metrics across a 2x2 counterbalanced crossover protocol.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## System Architecture
 
-## Customize configuration
+The architecture decouples the pure algorithmic logic from the reactive presentation layer, guaranteeing mathematical determinism and robust UI state management.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+- **Asynchronous Generator Engine:** The core algorithm operates as a standalone generator (`createGaleShapleyEngine`). It yields discrete transition events (`PROPOSE`, `ACCEPT`, `DISPLACE`, `BREAKPOINT`) chronologically, completely isolated from the DOM.
+- **Deterministic State Ledger:** The Pinia store (`matchingStore.ts`) acts as the state orchestrator. It hydrates the data payload, precomputes the generator's full trajectory, and commits each matrix state into an immutable array (`MarketStateSnapshot[]`).
+- **O(1) Data Structures:** Leverages inverted index matrices (`receiverInvertedRanks`) for constant-time complexity during micro-evaluations of receiver preferences, preventing O(N) iteration blocks during cascading rejections.
+- **Recursive Tick Pipeline:** The UI is driven by an asynchronous playback loop utilising recursive `setTimeout` frames, guaranteeing thread-safe visual transitions (e.g., 800ms) without blocking the JavaScript main thread.
 
-## Project Setup
+## Production Fault-Tolerance (ADRs)
 
-```sh
+Engineered for highly volatile networking environments and unpredictable human-computer interaction (HCI) during live telemetry collection.
+
+- **Concurrency & Idempotency Locks:** Implemented array-level evaluation barriers (`telemetryBuffer.some()`) and `isTransitioning` UI locks. This intercepts phantom DOM double-clicks, strictly preventing duplicate payload collisions before they reach the network queue.
+- **Dead-Letter Queues (DLQ):** Fallback offline-first ingestion wrapping Supabase POST requests. Network failures trigger a silent serialisation to a `localStorage` DLQ, preventing data degradation during transient connection drops.
+- **Database Schema Scaling:** Migrated PostgreSQL telemetry schemas to `int4` to accommodate unbounded cognitive deliberation latencies, eliminating transaction rollbacks triggered by `int2` (smallint) buffer overflows.
+- **Hardware Mathematical Sanitisation:** Algorithmic truncation at the ingestion layer forcibly drops interactions under 150ms, filtering mechanical hardware misfires out of the statistical model.
+
+## Algorithmic Integration Validation
+
+To guarantee the mathematical truth of the matching allocations, the system utilises **Vitest** for integration testing of the generator pipeline. Tests strictly mock the `DatasetPayload` interface and validate chronological `yield` sequences, ensuring capacity limits and cascading displacement edge cases process deterministically.
+
+## Local Development
+
+The repository is built strictly with modern tooling, utilising **Vite 8** for rapid Hot Module Replacement (HMR) and **Tailwind 3.4** for styling.
+
+```bash
+# Install dependencies
 npm install
-```
 
-### Compile and Hot-Reload for Development
-
-```sh
+# Spin up the Vite dev server
 npm run dev
-```
 
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
+# Run algorithmic test suites
 npm run test:unit
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+## Tech Stack
 
-```sh
-npm run lint
-```
+- **Core:** `Vue 3.5` · `TypeScript 6` · `Pinia 4`
+- **Tooling:** `Vite 8` · `Vitest 4` · `ESLint 10` · `Oxlint` · `Prettier`
+- **Styling:** `Tailwind CSS 3.4` · `PostCSS`
+- **Backend & Infrastructure:** `Supabase 2` · `Vercel Edge Network`
