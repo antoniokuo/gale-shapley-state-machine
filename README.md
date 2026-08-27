@@ -7,7 +7,7 @@
 
 A deterministic, DAG-reactive state machine engineered to visualise and execute bipartite market matching (Hospital-Residents / Gale-Shapley algorithm). Built to enforce O(1) memory lookups, strict state isolation, and offline-first fault tolerance for empirical telemetry collection.
 
-https://github.com/user-attachments/assets/e60a2a74-32c8-4617-a086-e2b5f77f05dc
+https://github.com/user-attachments/assets/48e039ca-5208-4907-ab99-fb940ab65d2b
 
 ## Operational Context & Institutional Compliance
 
