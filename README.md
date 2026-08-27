@@ -14,7 +14,7 @@ https://github.com/user-attachments/assets/e60a2a74-32c8-4617-a086-e2b5f77f05dc
 Developed as an MSc Computer Science dissertation project at the University of Bath, this architecture was engineered under strict institutional research constraints to serve as the primary telemetry engine for a live Human-Computer Interaction (HCI) study.
 
 - **Data Governance (UK GDPR):** Enforces strict participant anonymity via randomised UUID generation and Supabase Row Level Security (RLS) policies to comply with university ethics protocols.
-- **Cryptographic Consent Routing:** The Vue application implements a strict initialization gateway. Access to the core state machine is physically blocked by router guards until explicit user consent is registered via the Participant Information Sheet (PIS).
+- **Cryptographic Consent Routing:** The Vue application implements a strict initialisation gateway. Access to the core state machine is physically blocked by router guards until explicit user consent is registered via the Participant Information Sheet (PIS).
 - **Empirical Telemetry Isolation:** Utilises high-resolution web APIs to isolate human cognitive processing latency from frontend reactive rendering cycles, capturing sub-second execution metrics across a 2x2 counterbalanced crossover protocol.
 
 ## System Architecture
