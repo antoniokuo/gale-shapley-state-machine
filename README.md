@@ -5,6 +5,8 @@
 ![Pinia](https://img.shields.io/badge/Pinia-4.0-FFE066?style=flat-square&logo=vue.js)
 ![Vitest](https://img.shields.io/badge/Vitest-4.1-729B1B?style=flat-square&logo=vitest)
 
+[![CI Pipeline](https://github.com/antoniokuo/gale-shapley-state-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniokuo/gale-shapley-state-machine/actions/workflows/ci.yml)
+
 A deterministic, DAG-reactive state machine engineered to visualise and execute bipartite market matching (Hospital-Residents / Gale-Shapley algorithm). Built to enforce O(1) memory lookups, strict state isolation, and offline-first fault tolerance for empirical telemetry collection.
 
 https://github.com/user-attachments/assets/48e039ca-5208-4907-ab99-fb940ab65d2b
