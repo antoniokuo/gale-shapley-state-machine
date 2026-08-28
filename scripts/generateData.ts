@@ -10,7 +10,6 @@ const __dirname = path.dirname(__filename)
 // --- Mathematical Specifications ---
 const N = 30 // Proposers (Residents)
 const M = 10 // Receivers (Hospitals)
-const C = 3 // Receiver Capacity (Perfect Saturation: 10 * 3 = 30)
 const S = 1.5 // Zipfian Skew Parameter
 
 interface MarketData {
