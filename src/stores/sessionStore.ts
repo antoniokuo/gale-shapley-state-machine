@@ -22,6 +22,14 @@ export interface TelemetryRecord {
   isCorrect: boolean
 }
 
+export interface DatabasePayload {
+  session_uuid: string
+  breakpoint_id: string
+  condition_type: 'STATIC' | 'REACTIVE'
+  latency_ms: number
+  is_correct: boolean
+}
+
 export const useSessionStore = defineStore('session', {
   state: () => ({
     currentPhase: 'PIS' as SessionPhase,
@@ -62,7 +70,7 @@ export const useSessionStore = defineStore('session', {
           const { data, error } = await supabase.rpc('get_balanced_sequence_assignment')
           if (error) throw error
           this.sequenceGroup = data as SequenceGroup
-        } catch (e) {
+        } catch (e: unknown) {
           console.warn(
             'Database allocation failed. Invoking client fallback sequence balancing.',
             e,
@@ -138,8 +146,8 @@ export const useSessionStore = defineStore('session', {
     async flushTelemetryBuffer() {
       if (!this.uuid || this.telemetryBuffer.length === 0) return
 
-      const payload = this.telemetryBuffer.map((record) => ({
-        session_uuid: this.uuid,
+      const payload: DatabasePayload[] = this.telemetryBuffer.map((record) => ({
+        session_uuid: this.uuid as string,
         breakpoint_id: record.breakpointId,
         condition_type: record.taskCondition,
         latency_ms: record.latencyMs,
@@ -153,9 +161,10 @@ export const useSessionStore = defineStore('session', {
           const { error } = await supabase.from('session_telemetry').insert(payload)
           if (error) throw error
           this.telemetryBuffer = []
-        } catch (e: any) {
+        } catch (e: unknown) {
           // THIS IS NON-NEGOTIABLE. DO NOT REMOVE THIS ALERT.
-          const errorMsg = e?.message || e?.details || JSON.stringify(e)
+          const err = e as { message?: string; details?: string }
+          const errorMsg = err?.message || err?.details || String(e)
           alert(
             `CRITICAL DATA LOSS DETECTED!\n\nReason: ${errorMsg}\n\nDO NOT CLOSE THIS BROWSER WINDOW. Call the researcher to extract the Dead-Letter Queue immediately.`,
           )
@@ -173,13 +182,13 @@ export const useSessionStore = defineStore('session', {
     // --------------------------------------------------
     // DISTRIBUTED FAULT-TOLERANCE HOOKS (Industry Showcase)
     // --------------------------------------------------
-    preserveToDeadLetterQueue(storageKey: string, freshPayload: any[]) {
+    preserveToDeadLetterQueue<T>(storageKey: string, freshPayload: T[]) {
       try {
         const existingDataString = localStorage.getItem(storageKey)
-        const existingData = existingDataString ? JSON.parse(existingDataString) : []
+        const existingData: T[] = existingDataString ? JSON.parse(existingDataString) : []
         const combinedPayload = [...existingData, ...freshPayload]
         localStorage.setItem(storageKey, JSON.stringify(combinedPayload))
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Catastrophic failure writing to client local storage buffer:', err)
       }
     },
@@ -191,7 +200,7 @@ export const useSessionStore = defineStore('session', {
       const cachedTelemetry = localStorage.getItem('telemetry_dlq')
       if (cachedTelemetry) {
         try {
-          const parsedPayload = JSON.parse(cachedTelemetry)
+          const parsedPayload: DatabasePayload[] = JSON.parse(cachedTelemetry)
           const { error } = await supabase.from('session_telemetry').insert(parsedPayload)
           if (!error) {
             localStorage.removeItem('telemetry_dlq')
@@ -199,7 +208,7 @@ export const useSessionStore = defineStore('session', {
               'Successfully recovered and flushed cached telemetry queue logs to cloud storage.',
             )
           }
-        } catch (e) {
+        } catch (e: unknown) {
           console.warn('Network transmission retry failed. Retaining queue cache.', e)
         }
       }

@@ -9,7 +9,7 @@ import ConsentGateway from './components/ConsentGateway.vue'
 import DebriefView from './components/DebriefView.vue'
 import MatchingGrid from './components/MatchingGrid.vue'
 import SurveyInstrument from './components/SurveyInstrument.vue'
-import Sandbox from './components/Sandbox.vue'
+import SandboxView from './components/SandboxView.vue'
 import TutorialInteractive from './components/TutorialInteractive.vue'
 import TutorialStatic from './components/TutorialStatic.vue'
 
@@ -260,7 +260,7 @@ const handleSurveySubmission = async (payload: {
       />
     </div>
 
-    <Sandbox v-else-if="session.currentPhase === 'SANDBOX'" />
+    <SandboxView v-else-if="session.currentPhase === 'SANDBOX'" />
 
     <DebriefView v-else-if="session.currentPhase === 'DEBRIEF'" />
   </main>

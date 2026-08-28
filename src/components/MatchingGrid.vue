@@ -10,8 +10,14 @@ const props = defineProps<{
 
 const store = useMatchingStore()
 
+export interface PredictionPayload {
+  predictedAction: string
+  predictedTarget: string
+  latencyMs: number
+}
+
 defineEmits<{
-  (e: 'submit-prediction', payload: any): void
+  (e: 'submit-prediction', payload: PredictionPayload): void
 }>()
 
 // --------------------------------------------------

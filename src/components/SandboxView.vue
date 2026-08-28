@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useMatchingStore } from '../stores/matchingStore'
-import { useSessionStore } from '../stores/sessionStore'
-import { supabase } from '../supabase'
+import { useMatchingStore } from '../stores/matchingStore.ts'
+import { useSessionStore } from '../stores/sessionStore.ts'
+import { supabase } from '../supabase.ts'
 import MatchingGrid from './MatchingGrid.vue'
 
 const store = useMatchingStore()

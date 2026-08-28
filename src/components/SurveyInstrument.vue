@@ -1,8 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useSessionStore } from '../stores/sessionStore'
-
-const session = useSessionStore()
 
 const props = defineProps<{
   conditionLabel: 'Static View' | 'Interactive DAG View'
