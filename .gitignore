@@ -40,3 +40,8 @@ __screenshots__/
 
 # User-Study Telemetry
 data/
+
+# Local ETL Data (GDPR & Institutional Ethics Compliance)
+data/raw/
+data/clean/
+*.csv
