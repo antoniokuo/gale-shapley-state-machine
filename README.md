@@ -54,10 +54,12 @@ To guarantee the mathematical truth of the matching allocations, the system util
 
 ## Local Development
 
-The repository is built strictly with modern tooling, utilising **Vite 8** for rapid Hot Module Replacement (HMR) and **Tailwind 3.4** for styling.
+The repository operates a polyglot environment. The fronend is built strictly with modern tooling, utilising **Vite 8** for rapid Hot Module Replacement (HMR) and **Tailwind 3.4** for styling. The data pipeline relies on **Python 3.12**.
+
+**Frontend Client (Vue 3 / TypeScript)**
 
 ```bash
-# Install dependencies
+# Install Node dependencies
 npm install
 
 # Spin up the Vite dev server
@@ -65,6 +67,19 @@ npm run dev
 
 # Run algorithmic test suites
 npm run test:unit
+```
+
+**ETL Pipeline & Statistical Engine (Python)**
+
+```bash
+# Install scientific computing and linting dependencies
+pip install pandas scipy statsmodels seaborn matplotlib ruff
+
+# Execute the nonparametric statistical pipeline
+python scripts/etl/analysis.py
+
+# Enforce Python hygiene (mirrors CI/CD gating)
+ruff check scripts/etl/
 ```
 
 ## Tech Stack
