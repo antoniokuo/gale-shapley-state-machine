@@ -39,7 +39,7 @@ Engineered for highly volatile networking environments and unpredictable human-c
 - **Concurrency & Idempotency Locks:** Implemented array-level evaluation barriers (`telemetryBuffer.some()`) and `isTransitioning` UI locks. This intercepts phantom DOM double-clicks, strictly preventing duplicate payload collisions before they reach the network queue.
 - **Dead-Letter Queues (DLQ):** Fallback offline-first ingestion wrapping Supabase POST requests. Network failures trigger a silent serialisation to a `localStorage` DLQ, preventing data degradation during transient connection drops.
 - **Database Schema Scaling:** Migrated PostgreSQL telemetry schemas to `int4` to accommodate unbounded cognitive deliberation latencies, eliminating transaction rollbacks triggered by `int2` (smallint) buffer overflows.
-- **Frontend Payload Sanitisation:** Enforces strict lower-bound floor constraints (Math.max(1, Math.round(delta))) prior to network dispatch, protecting the PostgreSQL database from zero-value bounds or floating-point anomalies.
+- **Frontend Payload Sanitisation:** Enforces strict lower-bound floor constraints `(Math.max(1, Math.round(delta)))` prior to network dispatch, protecting the PostgreSQL database from zero-value bounds or floating-point anomalies.
 
 ## Algorithmic Integration Validation
 
