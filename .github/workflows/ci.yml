@@ -34,7 +34,12 @@ jobs:
       - name: Validate Production Build
         run: npm run build
 
-        - name: Install Ruff (Python Linter)
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Ruff (Python Linter)
         run: pip install ruff
 
       - name: Enforce Python Hygiene
