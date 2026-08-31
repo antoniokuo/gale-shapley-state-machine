@@ -4,7 +4,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript)
 ![Pinia](https://img.shields.io/badge/Pinia-4.0-FFE066?style=flat-square&logo=vue.js)
 ![Vitest](https://img.shields.io/badge/Vitest-4.1-729B1B?style=flat-square&logo=vitest)
-
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python)
+![Pandas](https://img.shields.io/badge/Pandas-2.2-150458?style=flat-square&logo=pandas)
 [![CI Pipeline](https://github.com/antoniokuo/gale-shapley-state-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniokuo/gale-shapley-state-machine/actions/workflows/ci.yml)
 
 A deterministic, DAG-reactive state machine engineered to visualise and execute bipartite market matching (Hospital-Residents / Gale-Shapley algorithm). Built to enforce O(1) memory lookups, strict state isolation, and offline-first fault tolerance for empirical telemetry collection.
@@ -27,6 +28,7 @@ The architecture decouples the pure algorithmic logic from the reactive presenta
 - **Deterministic State Ledger:** The Pinia store (`matchingStore.ts`) acts as the state orchestrator. It hydrates the data payload, precomputes the generator's full trajectory, and commits each matrix state into an immutable array (`MarketStateSnapshot[]`).
 - **O(1) Data Structures:** Leverages inverted index matrices (`receiverInvertedRanks`) for constant-time complexity during micro-evaluations of receiver preferences, preventing O(N) iteration blocks during cascading rejections.
 - **Recursive Tick Pipeline:** The UI is driven by an asynchronous playback loop utilising recursive `setTimeout` frames, guaranteeing thread-safe visual transitions (e.g., 800ms) without blocking the JavaScript main thread.
+- **Deterministic ETL & Statistical Engine:** A standalone Python data pipeline (`pandas`, `scipy`) programmatically ingests raw Supabase telemetry. It executes strict `<150ms` hardware noise truncation, enforces $2 \times 2$ crossover sequence diagnostics (Mann-Whitney U), and automates non-parametric Holm-Bonferroni adjusted reporting assets, completely decoupling raw human data from the public git tree.
 
 ## Production Fault-Tolerance (ADRs)
 
@@ -62,3 +64,4 @@ npm run test:unit
 - **Tooling:** `Vite 8` · `Vitest 4` · `ESLint 10` · `Oxlint` · `Prettier`
 - **Styling:** `Tailwind CSS 3.4` · `PostCSS`
 - **Backend & Infrastructure:** `Supabase 2` · `Vercel Edge Network`
+- **Data Engineering:** `Python 3` · `Pandas` · `SciPy` · `Statsmodels` · `Seaborn`
