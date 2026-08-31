@@ -41,6 +41,13 @@ Engineered for highly volatile networking environments and unpredictable human-c
 - **Database Schema Scaling:** Migrated PostgreSQL telemetry schemas to `int4` to accommodate unbounded cognitive deliberation latencies, eliminating transaction rollbacks triggered by `int2` (smallint) buffer overflows.
 - **Frontend Payload Sanitisation:** Enforces strict lower-bound floor constraints `(Math.max(1, Math.round(delta)))` prior to network dispatch, protecting the PostgreSQL database from zero-value bounds or floating-point anomalies.
 
+## Automated Reporting Assets
+
+The Python ETL pipeline automatically aggregates the sanitised telemetry and outputs publication-grade reporting assets, demonstrating full-cycle data engineering from frontend ingestion to backend statistical evaluation.
+
+- **[Statistical Results Matrix (.tex)](docs/results/statistical_results.tex):** Automated generation of non-parametric $p$-values, $Z$-statistics, and Holm-Bonferroni alpha adjustments formatted for direct manuscript compilation.
+- **[Primary Endpoint Visualisation (.pdf)](docs/results/mental_demand_boxplot.pdf):** Vector-based distribution graphics evaluating cognitive load shifts across the counterbalanced crossover protocol.
+
 ## Algorithmic Integration Validation
 
 To guarantee the mathematical truth of the matching allocations, the system utilises **Vitest** for integration testing of the generator pipeline. Tests strictly mock the `DatasetPayload` interface and validate chronological `yield` sequences, ensuring capacity limits and cascading displacement edge cases process deterministically.
