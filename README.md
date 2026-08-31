@@ -8,9 +8,11 @@
 ![Pandas](https://img.shields.io/badge/Pandas-2.2-150458?style=flat-square&logo=pandas)
 [![CI Pipeline](https://github.com/antoniokuo/gale-shapley-state-machine/actions/workflows/ci.yml/badge.svg)](https://github.com/antoniokuo/gale-shapley-state-machine/actions/workflows/ci.yml)
 
+**[Live Production Deployment](https://gale-shapley-state-machine.vercel.app)**
+
 A deterministic, DAG-reactive state machine engineered to visualise and execute bipartite market matching (Hospital-Residents / Gale-Shapley algorithm). Built to enforce O(1) memory lookups, strict state isolation, and offline-first fault tolerance for empirical telemetry collection.
 
-https://github.com/user-attachments/assets/48e039ca-5208-4907-ab99-fb940ab65d2b
+[View System Architecture Demo](https://github.com/user-attachments/assets/48e039ca-5208-4907-ab99-fb940ab65d2b)
 
 ## Operational Context & Institutional Compliance
 
@@ -37,7 +39,7 @@ Engineered for highly volatile networking environments and unpredictable human-c
 - **Concurrency & Idempotency Locks:** Implemented array-level evaluation barriers (`telemetryBuffer.some()`) and `isTransitioning` UI locks. This intercepts phantom DOM double-clicks, strictly preventing duplicate payload collisions before they reach the network queue.
 - **Dead-Letter Queues (DLQ):** Fallback offline-first ingestion wrapping Supabase POST requests. Network failures trigger a silent serialisation to a `localStorage` DLQ, preventing data degradation during transient connection drops.
 - **Database Schema Scaling:** Migrated PostgreSQL telemetry schemas to `int4` to accommodate unbounded cognitive deliberation latencies, eliminating transaction rollbacks triggered by `int2` (smallint) buffer overflows.
-- **Hardware Mathematical Sanitisation:** Algorithmic truncation at the ingestion layer forcibly drops interactions under 150ms, filtering mechanical hardware misfires out of the statistical model.
+- **Frontend Payload Sanitisation:** Enforces strict lower-bound floor constraints (Math.max(1, Math.round(delta))) prior to network dispatch, protecting the PostgreSQL database from zero-value bounds or floating-point anomalies.
 
 ## Algorithmic Integration Validation
 
@@ -63,5 +65,5 @@ npm run test:unit
 - **Core:** `Vue 3.5` · `TypeScript 6` · `Pinia 4`
 - **Tooling:** `Vite 8` · `Vitest 4` · `ESLint 10` · `Oxlint` · `Prettier`
 - **Styling:** `Tailwind CSS 3.4` · `PostCSS`
-- **Backend & Infrastructure:** `Supabase 2` · `Vercel Edge Network`
+- **Backend & Infrastructure:** Supabase 2 · Vercel Edge Network · GitHub Actions (CI/CD)
 - **Data Engineering:** `Python 3` · `Pandas` · `SciPy` · `Statsmodels` · `Seaborn`
