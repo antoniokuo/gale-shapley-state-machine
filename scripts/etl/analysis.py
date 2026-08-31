@@ -77,7 +77,7 @@ def execute_statistical_pipeline(df: pd.DataFrame, output_dir: Path) -> None:
 
     conditions = df['condition_type'].unique()
     cond_a = 'STATIC'
-    cond_b = [c for c in conditions if c != 'STATIC'][0]
+    cond_b = next(c for c in conditions if c != 'STATIC')
 
     results = []
     p_values_secondary = []
@@ -150,7 +150,7 @@ def execute_statistical_pipeline(df: pd.DataFrame, output_dir: Path) -> None:
     # 2. Export Publication-Grade Vector PDF Plot
     plt.figure(figsize=(7, 5))
     sns.set_theme(style="ticks")
-    ax = sns.boxplot(
+    sns.boxplot(
         x='condition_type',
         y='nasa_primary_endpoint',
         data=df,
