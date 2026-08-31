@@ -33,3 +33,9 @@ jobs:
 
       - name: Validate Production Build
         run: npm run build
+
+        - name: Install Ruff (Python Linter)
+        run: pip install ruff
+
+      - name: Enforce Python Hygiene
+        run: ruff check scripts/etl/
