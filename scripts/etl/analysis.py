@@ -129,7 +129,7 @@ def execute_statistical_pipeline(df: pd.DataFrame, output_dir: Path) -> None:
     latex_table = (
         "\\begin{table}[htbp]\n"
         "\\centering\n"
-        "\\small\n"
+        "\\resizebox{\\textwidth}{!}{\n"
         "\\begin{tabular}{lccccc}\n"
         "\\hline\n"
         "Metric & Static (Median [IQR]) & Interactive (Median [IQR]) & $Z$ & $r$ & $p$-value \\\\\n"
@@ -137,6 +137,7 @@ def execute_statistical_pipeline(df: pd.DataFrame, output_dir: Path) -> None:
         + "\n".join(latex_rows) + "\n"
         "\\hline\n"
         "\\end{tabular}\n"
+        "}\n"
         "\\caption{Wilcoxon signed-rank test results ($N=16$). *Denotes pre-registered primary endpoint (unadjusted). Secondary $p$-values are adjusted using Holm-Bonferroni step-down corrections.}\n"
         "\\label{tab:statistical_results}\n"
         "\\end{table}\n"
